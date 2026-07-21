@@ -8,11 +8,20 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+Thumbs.db
 /build
 /captures
 .externalNativeBuild
 .cxx
+.kotlin
 local.properties
+
+# Build artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+*.hprof
 
 # Release signing - never commit the keystore or its credentials.
 keystore.properties
