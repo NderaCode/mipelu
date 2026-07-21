@@ -1,0 +1,28 @@
+package com.cocido.mipelu.domain.model
+
+data class WorkRecord(
+    val id: String,
+    val ownerUserId: String,
+    val clientId: String,
+    val clientName: String,
+    val serviceType: ServiceType,
+    val date: Long,
+    val hairCondition: String = "",
+    val baseColor: String = "",
+    val objective: String = "",
+    val formula: String = "",
+    val productsUsed: String = "",
+    val oxidantVolume: String = "",
+    val exposureTime: String = "",
+    val technique: String = "",
+    val finalResult: String = "",
+    val price: String = "",
+    val recommendations: String = "",
+    val nextFollowUpNote: String = "",
+    val beforePhotoUrls: List<String> = emptyList(),
+    val afterPhotoUrls: List<String> = emptyList(),
+    val notes: String = "",
+    val isDraft: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+)
