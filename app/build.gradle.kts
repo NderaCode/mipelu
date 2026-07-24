@@ -63,8 +63,11 @@ android {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            // Placeholder: set the real production API URL here once the backend is deployed.
-            buildConfigField("String", "API_BASE_URL", "\"https://REPLACE_WITH_PRODUCTION_API_URL/\"")
+            // Trailing slash is mandatory: Retrofit's baseUrl() throws IllegalArgumentException
+            // at startup without it, since every @GET/@POST path in MiPeluApi is relative
+            // ("auth/login", not "/auth/login"). https://api.shacode.com.ar with no slash would
+            // crash the app on the very first network call.
+            buildConfigField("String", "API_BASE_URL", "\"https://api.shacode.com.ar/\"")
         }
     }
     compileOptions {
