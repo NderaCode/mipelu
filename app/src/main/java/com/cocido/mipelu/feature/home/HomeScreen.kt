@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cocido.mipelu.core.theme.Marron
+import com.cocido.mipelu.core.theme.CiruelaMedio
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.SectionLabel
 import com.cocido.mipelu.core.ui.components.WorkListItem
@@ -48,7 +48,7 @@ fun HomeScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AvatarInitials(initials = uiState.greetingName.firstOrNull()?.uppercase() ?: "?", containerColor = Marron, contentColor = Superficie)
+                AvatarInitials(initials = uiState.greetingName.firstOrNull()?.uppercase() ?: "?", containerColor = CiruelaMedio, contentColor = Superficie)
                 Text(
                     text = "Hola, ${uiState.greetingName}",
                     style = MaterialTheme.typography.bodyLarge,

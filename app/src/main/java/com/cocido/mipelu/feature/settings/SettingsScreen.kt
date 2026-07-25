@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.ErrorLogout
-import com.cocido.mipelu.core.theme.Marron
+import com.cocido.mipelu.core.theme.CiruelaMedio
 import com.cocido.mipelu.core.theme.Superficie
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.util.toHumanReadableSize
@@ -68,7 +68,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        AvatarInitials(initials = p.initials, size = 52.dp, containerColor = Marron, contentColor = Superficie)
+                        AvatarInitials(initials = p.initials, size = 52.dp, containerColor = CiruelaMedio, contentColor = Superficie)
                         Column {
                             Text(p.professionalName.ifBlank { p.name }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                             Text("Estilista independiente", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

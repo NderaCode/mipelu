@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.cocido.mipelu.core.theme.Marron
+import com.cocido.mipelu.core.theme.CiruelaMedio
 import com.cocido.mipelu.core.theme.NudeClaro
 import com.cocido.mipelu.core.theme.NudeTexto
 
@@ -23,7 +23,7 @@ fun AvatarInitials(
     modifier: Modifier = Modifier,
     size: androidx.compose.ui.unit.Dp = 44.dp,
     containerColor: Color = NudeClaro,
-    contentColor: Color = Marron,
+    contentColor: Color = CiruelaMedio,
 ) {
     Box(
         modifier = modifier

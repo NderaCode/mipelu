@@ -86,7 +86,11 @@ fun WorkListItem(
                         maxLines = 1,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    BadgeTag(label = work.serviceType.label)
+                    BadgeTag(
+                        label = work.serviceType.label,
+                        containerColor = work.serviceType.badgeContainerColor(),
+                        contentColor = work.serviceType.badgeContentColor(),
+                    )
                 }
                 Text(
                     text = work.date.toShortDateEs(),

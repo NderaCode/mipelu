@@ -26,6 +26,8 @@ import com.cocido.mipelu.core.ui.components.BeforeAfterPhotos
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.TopBarBack
+import com.cocido.mipelu.core.ui.components.badgeContainerColor
+import com.cocido.mipelu.core.ui.components.badgeContentColor
 import com.cocido.mipelu.core.util.toShortDateEs
 import com.cocido.mipelu.domain.model.WorkRecord
 
@@ -41,7 +43,14 @@ fun WorkDetailScreen(
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TopBarBack(title = work?.clientName.orEmpty(), onBack = onBack) {
-            work?.let { BadgeTag(label = it.serviceType.label, modifier = Modifier.padding(end = 12.dp)) }
+            work?.let {
+                BadgeTag(
+                    label = it.serviceType.label,
+                    containerColor = it.serviceType.badgeContainerColor(),
+                    contentColor = it.serviceType.badgeContentColor(),
+                    modifier = Modifier.padding(end = 12.dp),
+                )
+            }
         }
         val current = work ?: return@Column
 
