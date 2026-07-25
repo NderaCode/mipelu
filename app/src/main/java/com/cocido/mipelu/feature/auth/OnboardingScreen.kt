@@ -1,5 +1,6 @@
 package com.cocido.mipelu.feature.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,18 +8,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.cocido.mipelu.core.theme.NudeClaro
-import com.cocido.mipelu.core.theme.Marron
+import com.cocido.mipelu.R
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 
@@ -35,17 +33,13 @@ fun OnboardingScreen(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(NudeClaro, RoundedCornerShape(20.dp)),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                Icons.Outlined.AutoAwesome,
+            Image(
+                painter = painterResource(R.drawable.ic_mi_pelu_logo),
                 contentDescription = null,
-                tint = Marron,
-                modifier = Modifier.padding(48.dp),
+                modifier = Modifier.size(140.dp),
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

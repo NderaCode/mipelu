@@ -7,11 +7,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 
 private val MiPeluLightColorScheme = lightColorScheme(
-    primary = Terracota,
+    primary = Morado,
     onPrimary = Superficie,
     primaryContainer = NudeClaro,
     onPrimaryContainer = NudeTexto,
-    secondary = Marron,
+    secondary = CiruelaMedio,
     onSecondary = Superficie,
     secondaryContainer = NudeClaro,
     onSecondaryContainer = NudeTexto,

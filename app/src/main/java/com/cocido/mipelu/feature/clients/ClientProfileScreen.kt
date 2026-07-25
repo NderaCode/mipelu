@@ -28,6 +28,8 @@ import com.cocido.mipelu.core.theme.NudeClaro
 import com.cocido.mipelu.core.theme.NudeTexto
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.BadgeTag
+import com.cocido.mipelu.core.ui.components.badgeContainerColor
+import com.cocido.mipelu.core.ui.components.badgeContentColor
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.SectionLabel
@@ -162,7 +164,11 @@ private fun ClientTimelineItem(work: WorkRecord, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                BadgeTag(label = work.serviceType.label)
+                BadgeTag(
+                    label = work.serviceType.label,
+                    containerColor = work.serviceType.badgeContainerColor(),
+                    contentColor = work.serviceType.badgeContentColor(),
+                )
                 Text(work.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (work.formula.isNotBlank()) {
