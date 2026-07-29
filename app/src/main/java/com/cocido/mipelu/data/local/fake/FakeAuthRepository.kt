@@ -57,6 +57,8 @@ class FakeAuthRepository @Inject constructor(
         return Result.success(profile)
     }
 
+    override suspend fun forgotPassword(email: String): Result<Unit> = Result.success(Unit)
+
     override fun logout() {
         _currentUser.value = null
     }

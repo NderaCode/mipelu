@@ -17,6 +17,9 @@ sealed interface MiPeluDestination {
     data object SignUp : MiPeluDestination
 
     @Serializable
+    data object ForgotPassword : MiPeluDestination
+
+    @Serializable
     data object Home : MiPeluDestination
 
     @Serializable

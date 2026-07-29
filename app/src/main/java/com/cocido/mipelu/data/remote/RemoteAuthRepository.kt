@@ -3,6 +3,7 @@ package com.cocido.mipelu.data.remote
 import com.cocido.mipelu.data.di.ApplicationScope
 import com.cocido.mipelu.data.remote.api.MiPeluApi
 import com.cocido.mipelu.data.remote.auth.TokenStore
+import com.cocido.mipelu.data.remote.dto.ForgotPasswordRequest
 import com.cocido.mipelu.data.remote.dto.LoginRequest
 import com.cocido.mipelu.data.remote.dto.RefreshTokenRequest
 import com.cocido.mipelu.data.remote.dto.SignupRequest
@@ -62,7 +63,14 @@ class RemoteAuthRepository @Inject constructor(
             _currentUser.value = profile
             Result.success(profile)
         } catch (e: MiPeluApiException) {
-            Result.failure(e)
+            // A 401 here can only mean wrong credentials - there is no session yet to have
+            // expired, so the generic mapHttpError(401) message would be misleading.
+            val mapped = if (e.statusCode == 401) {
+                MiPeluApiException("Email o contraseña incorrectos.", e.statusCode)
+            } else {
+                e
+            }
+            Result.failure(mapped)
         }
     }
 
@@ -80,6 +88,15 @@ class RemoteAuthRepository @Inject constructor(
             val profile = response.user.toDomain(fetchStorageUsageOrNull())
             _currentUser.value = profile
             Result.success(profile)
+        } catch (e: MiPeluApiException) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun forgotPassword(email: String): Result<Unit> {
+        return try {
+            safeApiCall { api.forgotPassword(ForgotPasswordRequest(email.trim())) }
+            Result.success(Unit)
         } catch (e: MiPeluApiException) {
             Result.failure(e)
         }

@@ -15,5 +15,7 @@ interface AuthRepository {
         professionalName: String,
     ): Result<UserProfile>
 
+    suspend fun forgotPassword(email: String): Result<Unit>
+
     fun logout()
 }

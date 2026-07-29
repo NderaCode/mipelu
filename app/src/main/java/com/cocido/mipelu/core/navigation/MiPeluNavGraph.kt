@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.cocido.mipelu.feature.auth.ForgotPasswordScreen
 import com.cocido.mipelu.feature.auth.LoginScreen
 import com.cocido.mipelu.feature.auth.OnboardingScreen
 import com.cocido.mipelu.feature.auth.SignUpScreen
@@ -49,6 +50,13 @@ fun MiPeluNavGraph(navController: NavHostController) {
                     }
                 },
                 onGoToSignUp = { navController.navigate(MiPeluDestination.SignUp) },
+                onForgotPassword = { navController.navigate(MiPeluDestination.ForgotPassword) },
+            )
+        }
+
+        composable<MiPeluDestination.ForgotPassword> {
+            ForgotPasswordScreen(
+                onBack = { navController.popBackStack() },
             )
         }
 
