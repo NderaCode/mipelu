@@ -49,10 +49,9 @@ android {
 
     buildTypes {
         debug {
-            // 10.0.2.2 is the emulator's alias for the host machine's localhost, where
-            // `npm run start:dev` serves the NestJS API. For a physical device, replace with
-            // your PC's LAN IP (e.g. "http://192.168.1.50:3000/").
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
+            // Points at the same production API as release so debug builds never need a local
+            // backend running. Trailing slash mandatory - see the comment on the release block.
+            buildConfigField("String", "API_BASE_URL", "\"https://api.shacode.com.ar/\"")
         }
         release {
             isMinifyEnabled = false

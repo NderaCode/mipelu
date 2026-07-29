@@ -49,4 +49,24 @@ class AuthViewModel @Inject constructor(
     fun clearError() {
         _errorMessage.value = null
     }
+
+    private val _forgotPasswordLoading = MutableStateFlow(false)
+    val forgotPasswordLoading: StateFlow<Boolean> = _forgotPasswordLoading.asStateFlow()
+
+    private val _forgotPasswordError = MutableStateFlow<String?>(null)
+    val forgotPasswordError: StateFlow<String?> = _forgotPasswordError.asStateFlow()
+
+    private val _forgotPasswordSent = MutableStateFlow(false)
+    val forgotPasswordSent: StateFlow<Boolean> = _forgotPasswordSent.asStateFlow()
+
+    fun forgotPassword(email: String) {
+        _forgotPasswordError.value = null
+        viewModelScope.launch {
+            _forgotPasswordLoading.value = true
+            val result = authRepository.forgotPassword(email)
+            _forgotPasswordLoading.value = false
+            result.onSuccess { _forgotPasswordSent.value = true }
+                .onFailure { _forgotPasswordError.value = it.message }
+        }
+    }
 }
