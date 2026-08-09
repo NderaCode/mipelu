@@ -11,23 +11,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cocido.mipelu.core.ui.components.BadgeTag
+import com.cocido.mipelu.core.theme.ErrorLogout
 import com.cocido.mipelu.core.ui.components.BeforeAfterPhotos
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
+import com.cocido.mipelu.core.ui.components.ServiceTypeBadgeRow
 import com.cocido.mipelu.core.ui.components.TopBarBack
-import com.cocido.mipelu.core.ui.components.badgeContainerColor
-import com.cocido.mipelu.core.ui.components.badgeContentColor
 import com.cocido.mipelu.core.util.toShortDateEs
 import com.cocido.mipelu.domain.model.WorkRecord
 
@@ -39,16 +48,38 @@ fun WorkDetailScreen(
     viewModel: WorkDetailViewModel = hiltViewModel(),
 ) {
     val work by viewModel.work.collectAsStateWithLifecycle()
+    val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(deleteError) {
+        deleteError?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("¿Eliminar este trabajo?") },
+            text = { Text("Se van a borrar también sus fotos antes/después. Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    viewModel.deleteWork(onBack)
+                }) { Text("Eliminar", color = ErrorLogout) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancelar") }
+            },
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TopBarBack(title = work?.clientName.orEmpty(), onBack = onBack) {
-            work?.let {
-                BadgeTag(
-                    label = it.serviceType.label,
-                    containerColor = it.serviceType.badgeContainerColor(),
-                    contentColor = it.serviceType.badgeContentColor(),
-                    modifier = Modifier.padding(end = 12.dp),
+            IconButton(onClick = { showDeleteConfirm = true }) {
+                Icon(
+                    Icons.Filled.DeleteOutline,
+                    contentDescription = "Eliminar trabajo",
+                    tint = ErrorLogout,
                 )
             }
         }
@@ -59,7 +90,14 @@ fun WorkDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                Text(current.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(current.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ServiceTypeBadgeRow(types = current.serviceTypes)
+                }
             }
             item {
                 BeforeAfterPhotos(
@@ -129,7 +167,8 @@ fun WorkDetailScreen(
 
 private fun shareWorkSummary(context: android.content.Context, work: WorkRecord) {
     val summary = buildString {
-        append("${work.clientName} — ${work.serviceType.label} (${work.date.toShortDateEs()})\n")
+        val types = work.serviceTypes.joinToString(" + ") { it.label }
+        append("${work.clientName} — $types (${work.date.toShortDateEs()})\n")
         if (work.formula.isNotBlank()) append("Fórmula: ${work.formula}\n")
         if (work.productsUsed.isNotBlank()) append("Productos: ${work.productsUsed}\n")
         if (work.finalResult.isNotBlank()) append("Resultado: ${work.finalResult}\n")

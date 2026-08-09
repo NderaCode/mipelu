@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 enum class ClientFilter(val label: String) {
     TODAS("Todas"),
@@ -52,13 +53,14 @@ data class ClientListUiState(
     val clients: List<Client> = emptyList(),
     val searchQuery: String = "",
     val selectedFilter: ClientFilter = ClientFilter.TODAS,
+    val isLoading: Boolean = false,
 ) {
-    val isEmpty: Boolean get() = clients.isEmpty()
+    val isEmpty: Boolean get() = clients.isEmpty() && !isLoading
 }
 
 @HiltViewModel
 class ClientListViewModel @Inject constructor(
-    authRepository: AuthRepository,
+    private val authRepository: AuthRepository,
     private val clientRepository: ClientRepository,
 ) : ViewModel() {
 
@@ -70,7 +72,7 @@ class ClientListViewModel @Inject constructor(
             if (user == null) flowOf(emptyList()) else clientRepository.observeClients(user.id)
         }
         .let { clientsFlow ->
-            combine(clientsFlow, searchQuery, selectedFilter) { clients, query, filter ->
+            combine(clientsFlow, searchQuery, selectedFilter, clientRepository.isLoading) { clients, query, filter, isLoading ->
                 val filtered = clients
                     .filter { it.name.contains(query, ignoreCase = true) }
                     .filter { c ->
@@ -80,10 +82,10 @@ class ClientListViewModel @Inject constructor(
                             ClientFilter.SENSIBLES -> c.isSensitive()
                         }
                     }
-                ClientListUiState(clients = filtered, searchQuery = query, selectedFilter = filter)
+                ClientListUiState(clients = filtered, searchQuery = query, selectedFilter = filter, isLoading = isLoading)
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ClientListUiState())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ClientListUiState(isLoading = true))
 
     fun onSearchChange(query: String) {
         searchQuery.value = query
@@ -91,5 +93,10 @@ class ClientListViewModel @Inject constructor(
 
     fun onFilterSelected(filter: ClientFilter) {
         selectedFilter.value = filter
+    }
+
+    fun refresh() {
+        val ownerUserId = authRepository.currentUser.value?.id ?: return
+        viewModelScope.launch { clientRepository.refresh(ownerUserId) }
     }
 }

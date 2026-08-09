@@ -5,7 +5,7 @@ data class WorkRecord(
     val ownerUserId: String,
     val clientId: String,
     val clientName: String,
-    val serviceType: ServiceType,
+    val serviceTypes: List<ServiceType>,
     val date: Long,
     val hairCondition: String = "",
     val baseColor: String = "",

@@ -1,6 +1,20 @@
 package com.cocido.mipelu.feature.workrecords
 
+import com.cocido.mipelu.domain.model.ServiceType
 import com.cocido.mipelu.domain.model.WorkRecord
+
+/**
+ * Tipos que implican una fórmula química mezclada en el momento (vs. Corte/Peinado, que no).
+ * Determina si la sección "Fórmula y productos" se muestra en Nuevo trabajo.
+ */
+val ChemicalServiceTypes = setOf(
+    ServiceType.COLOR,
+    ServiceType.MECHAS,
+    ServiceType.BALAYAGE,
+    ServiceType.ALISADO,
+    ServiceType.KERATINA,
+    ServiceType.TRATAMIENTO,
+)
 
 data class WorkFieldSpec(
     val label: String,

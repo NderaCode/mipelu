@@ -16,7 +16,7 @@ fun WorkRecordDetailDto.toDomain(ownerUserId: String): WorkRecord {
         ownerUserId = ownerUserId,
         clientId = clientId,
         clientName = clientName,
-        serviceType = serviceType.toServiceType(),
+        serviceTypes = serviceTypes.map { it.toServiceType() },
         date = date.isoDateToMillis(),
         hairCondition = hairCondition.orEmpty(),
         baseColor = baseColor.orEmpty(),
@@ -43,7 +43,7 @@ fun WorkRecordDetailDto.toDomain(ownerUserId: String): WorkRecord {
 
 fun WorkRecord.toCreateRequest(): CreateWorkRecordRequest = CreateWorkRecordRequest(
     clientId = clientId,
-    serviceType = serviceType.toWireValue(),
+    serviceTypes = serviceTypes.map { it.toWireValue() },
     date = date.toIsoDate(),
     hairCondition = hairCondition.ifBlank { null },
     baseColor = baseColor.ifBlank { null },
@@ -62,7 +62,7 @@ fun WorkRecord.toCreateRequest(): CreateWorkRecordRequest = CreateWorkRecordRequ
 )
 
 fun WorkRecord.toUpdateRequest(): UpdateWorkRecordRequest = UpdateWorkRecordRequest(
-    serviceType = serviceType.toWireValue(),
+    serviceTypes = serviceTypes.map { it.toWireValue() },
     date = date.toIsoDate(),
     hairCondition = hairCondition.ifBlank { null },
     baseColor = baseColor.ifBlank { null },

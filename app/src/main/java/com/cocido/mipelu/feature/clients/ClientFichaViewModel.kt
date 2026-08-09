@@ -25,6 +25,12 @@ class ClientFichaViewModel @Inject constructor(
     private val _draft = MutableStateFlow<Client?>(null)
     val draft: StateFlow<Client?> = _draft.asStateFlow()
 
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     init {
         clientRepository.observeClient(clientId)
             .onEach { if (_draft.value == null) _draft.value = it }
@@ -37,9 +43,17 @@ class ClientFichaViewModel @Inject constructor(
 
     fun save(onSaved: () -> Unit) {
         val current = _draft.value ?: return
+        _errorMessage.value = null
         viewModelScope.launch {
-            clientRepository.upsertClient(current)
-            onSaved()
+            _isSaving.value = true
+            try {
+                clientRepository.upsertClient(current)
+                onSaved()
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "No se pudieron guardar los cambios. Probá de nuevo."
+            } finally {
+                _isSaving.value = false
+            }
         }
     }
 }

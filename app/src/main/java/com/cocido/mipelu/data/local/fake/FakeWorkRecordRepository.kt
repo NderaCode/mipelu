@@ -8,6 +8,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -15,6 +17,11 @@ import kotlinx.coroutines.flow.update
 class FakeWorkRecordRepository @Inject constructor() : WorkRecordRepository {
 
     private val works = MutableStateFlow(SeedData.works)
+
+    // The in-memory dataset is always already "loaded" - there's nothing to fetch.
+    override val isLoading: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+
+    override suspend fun refresh(ownerUserId: String) = Unit
 
     override fun observeWorks(ownerUserId: String): Flow<List<WorkRecord>> =
         works.map { list ->

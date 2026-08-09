@@ -47,11 +47,17 @@ class NewWorkViewModel @Inject constructor(
             ownerUserId = "",
             clientId = "",
             clientName = "",
-            serviceType = ServiceType.CORTE,
+            serviceTypes = emptyList(),
             date = System.currentTimeMillis(),
         ),
     )
     val draft: StateFlow<WorkRecord> = _draft.asStateFlow()
+
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     val clients: StateFlow<List<Client>> = authRepository.currentUser
         .flatMapLatest { user -> if (user == null) flowOf(emptyList()) else clientRepository.observeClients(user.id) }
@@ -75,7 +81,7 @@ class NewWorkViewModel @Inject constructor(
                                 it.copy(
                                     clientId = source.clientId,
                                     clientName = source.clientName,
-                                    serviceType = source.serviceType,
+                                    serviceTypes = source.serviceTypes,
                                     formula = source.formula,
                                     productsUsed = source.productsUsed,
                                     oxidantVolume = source.oxidantVolume,
@@ -94,8 +100,17 @@ class NewWorkViewModel @Inject constructor(
         _draft.update { it.copy(clientId = client.id, clientName = client.name) }
     }
 
-    fun selectServiceType(type: ServiceType) {
-        _draft.update { it.copy(serviceType = type) }
+    /** No permite deseleccionar el último tipo elegido: siempre debe quedar al menos uno. */
+    fun toggleServiceType(type: ServiceType) {
+        _draft.update { draft ->
+            val current = draft.serviceTypes
+            val updated = when {
+                type !in current -> current + type
+                current.size > 1 -> current - type
+                else -> current
+            }
+            draft.copy(serviceTypes = updated)
+        }
     }
 
     fun setDate(millis: Long) {
@@ -117,36 +132,44 @@ class NewWorkViewModel @Inject constructor(
     fun save(asDraft: Boolean, onSaved: () -> Unit) {
         val ownerUserId = authRepository.currentUser.value?.id ?: return
         val current = _draft.value
-        if (current.clientId.isBlank()) return
+        if (current.clientId.isBlank() || current.serviceTypes.isEmpty()) return
+        _errorMessage.value = null
         viewModelScope.launch {
-            // The backend needs a real work record id before it'll accept a photo upload, so
-            // the record is saved first and any freshly-picked (still-local) photo is uploaded
-            // right after, using the id the server just returned.
-            var saved = workRecordRepository.upsertWork(
-                current.copy(ownerUserId = ownerUserId, isDraft = asDraft),
-            )
+            _isSaving.value = true
+            try {
+                // The backend needs a real work record id before it'll accept a photo upload, so
+                // the record is saved first and any freshly-picked (still-local) photo is uploaded
+                // right after, using the id the server just returned.
+                var saved = workRecordRepository.upsertWork(
+                    current.copy(ownerUserId = ownerUserId, isDraft = asDraft),
+                )
 
-            current.beforePhotoUrls.firstOrNull()
-                ?.takeIf { it.isNotBlank() && !it.startsWith("http") }
-                ?.let { localUri ->
-                    readUriBytes(localUri)?.let { (bytes, mimeType) ->
-                        saved = workRecordRepository.uploadPhoto(
-                            saved.id, PhotoType.before, bytes, mimeType, "before.jpg",
-                        )
+                current.beforePhotoUrls.firstOrNull()
+                    ?.takeIf { it.isNotBlank() && !it.startsWith("http") }
+                    ?.let { localUri ->
+                        readUriBytes(localUri)?.let { (bytes, mimeType) ->
+                            saved = workRecordRepository.uploadPhoto(
+                                saved.id, PhotoType.before, bytes, mimeType, "before.jpg",
+                            )
+                        }
                     }
-                }
 
-            current.afterPhotoUrls.firstOrNull()
-                ?.takeIf { it.isNotBlank() && !it.startsWith("http") }
-                ?.let { localUri ->
-                    readUriBytes(localUri)?.let { (bytes, mimeType) ->
-                        saved = workRecordRepository.uploadPhoto(
-                            saved.id, PhotoType.after, bytes, mimeType, "after.jpg",
-                        )
+                current.afterPhotoUrls.firstOrNull()
+                    ?.takeIf { it.isNotBlank() && !it.startsWith("http") }
+                    ?.let { localUri ->
+                        readUriBytes(localUri)?.let { (bytes, mimeType) ->
+                            saved = workRecordRepository.uploadPhoto(
+                                saved.id, PhotoType.after, bytes, mimeType, "after.jpg",
+                            )
+                        }
                     }
-                }
 
-            onSaved()
+                onSaved()
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "No se pudo guardar el trabajo. Probá de nuevo."
+            } finally {
+                _isSaving.value = false
+            }
         }
     }
 

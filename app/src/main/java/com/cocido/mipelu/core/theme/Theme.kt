@@ -32,7 +32,9 @@ private val MiPeluLightColorScheme = lightColorScheme(
  * pero se repiten en el diseño (avatar, nota destacada, campo de solo lectura).
  */
 data class MiPeluExtendedColors(
-    val textoMuted: androidx.compose.ui.graphics.Color = TextoMuted,
+    // TextoMuted (#A79A8E) da ~2.7:1 sobre fondos claros, muy por debajo del 4.5:1 de WCAG AA.
+    // Se usa TextoSecundario (que sí pasa AA, ~5.2:1) como único tono "muted" del sistema.
+    val textoMuted: androidx.compose.ui.graphics.Color = TextoSecundario,
     val bordeCampo: androidx.compose.ui.graphics.Color = BordeCampo,
     val bordeSuave: androidx.compose.ui.graphics.Color = BordeSuave,
     val fondoBorrador: androidx.compose.ui.graphics.Color = FondoBorrador,
