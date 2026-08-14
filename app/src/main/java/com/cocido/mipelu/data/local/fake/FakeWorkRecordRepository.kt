@@ -18,8 +18,10 @@ class FakeWorkRecordRepository @Inject constructor() : WorkRecordRepository {
 
     private val works = MutableStateFlow(SeedData.works)
 
-    // The in-memory dataset is always already "loaded" - there's nothing to fetch.
+    // The in-memory dataset is always already "loaded" - there's nothing to fetch, so nothing
+    // can fail either.
     override val isLoading: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+    override val error: StateFlow<String?> = MutableStateFlow(null).asStateFlow()
 
     override suspend fun refresh(ownerUserId: String) = Unit
 

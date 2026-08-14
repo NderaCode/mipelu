@@ -54,8 +54,9 @@ data class ClientListUiState(
     val searchQuery: String = "",
     val selectedFilter: ClientFilter = ClientFilter.TODAS,
     val isLoading: Boolean = false,
+    val error: String? = null,
 ) {
-    val isEmpty: Boolean get() = clients.isEmpty() && !isLoading
+    val isEmpty: Boolean get() = clients.isEmpty() && !isLoading && error == null
 }
 
 @HiltViewModel
@@ -72,7 +73,13 @@ class ClientListViewModel @Inject constructor(
             if (user == null) flowOf(emptyList()) else clientRepository.observeClients(user.id)
         }
         .let { clientsFlow ->
-            combine(clientsFlow, searchQuery, selectedFilter, clientRepository.isLoading) { clients, query, filter, isLoading ->
+            combine(
+                clientsFlow,
+                searchQuery,
+                selectedFilter,
+                clientRepository.isLoading,
+                clientRepository.error,
+            ) { clients, query, filter, isLoading, error ->
                 val filtered = clients
                     .filter { it.name.contains(query, ignoreCase = true) }
                     .filter { c ->
@@ -82,7 +89,13 @@ class ClientListViewModel @Inject constructor(
                             ClientFilter.SENSIBLES -> c.isSensitive()
                         }
                     }
-                ClientListUiState(clients = filtered, searchQuery = query, selectedFilter = filter, isLoading = isLoading)
+                ClientListUiState(
+                    clients = filtered,
+                    searchQuery = query,
+                    selectedFilter = filter,
+                    isLoading = isLoading,
+                    error = error,
+                )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ClientListUiState(isLoading = true))

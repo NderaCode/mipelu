@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.outlined.NoteAdd
@@ -41,6 +42,7 @@ import com.cocido.mipelu.core.theme.CiruelaProfundo
 import com.cocido.mipelu.core.theme.Morado
 import com.cocido.mipelu.core.theme.RosaDorado
 import com.cocido.mipelu.core.ui.components.AvatarInitials
+import com.cocido.mipelu.core.ui.components.EmptyState
 import com.cocido.mipelu.core.ui.components.SectionLabel
 import com.cocido.mipelu.core.ui.components.WorkListItem
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
@@ -63,6 +65,19 @@ fun HomeScreen(
         onRefresh = viewModel::refresh,
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
     ) {
+    if (uiState.error != null && uiState.clientCount == 0 && uiState.workCount == 0) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            HeroHeader(greetingName = uiState.greetingName)
+            EmptyState(
+                title = "No se pudo cargar tu información",
+                subtitle = uiState.error.orEmpty(),
+                ctaLabel = "Reintentar",
+                onCtaClick = viewModel::refresh,
+                icon = Icons.Filled.CloudOff,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    } else {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 20.dp),
@@ -111,13 +126,27 @@ fun HomeScreen(
                 SectionLabel("Últimos trabajos")
             }
         }
-        items(uiState.recentWorks, key = { it.id }) { work ->
-            WorkListItem(
-                work = work,
-                onClick = { onWorkClick(work.id) },
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
+        if (uiState.recentWorks.isEmpty() && !uiState.isLoading) {
+            item {
+                EmptyState(
+                    title = "Todavía no hay trabajos",
+                    subtitle = "Los últimos trabajos que registres van a aparecer acá.",
+                    ctaLabel = "Nuevo trabajo",
+                    onCtaClick = onNuevoTrabajo,
+                    icon = Icons.AutoMirrored.Outlined.NoteAdd,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+            }
+        } else {
+            items(uiState.recentWorks, key = { it.id }) { work ->
+                WorkListItem(
+                    work = work,
+                    onClick = { onWorkClick(work.id) },
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+            }
         }
+    }
     }
     }
 }

@@ -14,6 +14,9 @@ interface ClientRepository {
      * apart from "genuinely empty" and avoid flashing an empty state on cold start. */
     val isLoading: StateFlow<Boolean>
 
+    /** Non-null when the last fetch failed (e.g. offline). Cleared on the next successful fetch. */
+    val error: StateFlow<String?>
+
     /** Re-fetches from the backend even if already loaded once. For pull-to-refresh. */
     suspend fun refresh(ownerUserId: String)
 

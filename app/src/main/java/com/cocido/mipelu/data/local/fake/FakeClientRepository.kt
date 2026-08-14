@@ -17,8 +17,10 @@ class FakeClientRepository @Inject constructor() : ClientRepository {
 
     private val clients = MutableStateFlow(SeedData.clients)
 
-    // The in-memory dataset is always already "loaded" - there's nothing to fetch.
+    // The in-memory dataset is always already "loaded" - there's nothing to fetch, so nothing
+    // can fail either.
     override val isLoading: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+    override val error: StateFlow<String?> = MutableStateFlow(null).asStateFlow()
 
     override suspend fun refresh(ownerUserId: String) = Unit
 

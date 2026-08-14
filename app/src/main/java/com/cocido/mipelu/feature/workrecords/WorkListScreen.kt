@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -86,6 +87,14 @@ fun WorkListScreen(
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
+            } else if (uiState.error != null && uiState.works.isEmpty()) {
+                EmptyState(
+                    title = "No se pudieron cargar los trabajos",
+                    subtitle = uiState.error.orEmpty(),
+                    ctaLabel = "Reintentar",
+                    onCtaClick = viewModel::refresh,
+                    icon = Icons.Filled.CloudOff,
+                )
             } else if (uiState.isEmpty) {
                 EmptyState(
                     title = "Todavía no hay trabajos registrados",
