@@ -14,14 +14,14 @@ import okhttp3.Route
  * AuthInterceptor/Authenticator of its own - reusing the main authenticated client here would
  * recurse back into this same Authenticator.
  *
- * Known limitation: if the refresh itself fails (refresh token expired/revoked), tokens are
- * cleared but nothing currently notifies AuthRepository.currentUser to flip to null - the user
- * stays "logged in" in the UI until they hit another 401 or restart the app. Acceptable for this
- * pass; a follow-up could expose a callback here to force a logout.
+ * If the refresh itself fails (refresh token expired/revoked), tokens are cleared and
+ * [sessionExpiredNotifier] is signaled so RemoteAuthRepository flips `currentUser` to null right
+ * away, instead of leaving the user "logged in" in the UI until the next 401 or app restart.
  */
 class TokenAuthenticator(
     private val tokenStore: TokenStore,
     private val refreshApi: MiPeluApi,
+    private val sessionExpiredNotifier: SessionExpiredNotifier,
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): okhttp3.Request? {
@@ -39,6 +39,7 @@ class TokenAuthenticator(
             runBlocking { refreshApi.refresh(RefreshTokenRequest(refreshToken)) }
         } catch (e: Exception) {
             tokenStore.clear()
+            sessionExpiredNotifier.notifySessionExpired()
             return null
         }
 

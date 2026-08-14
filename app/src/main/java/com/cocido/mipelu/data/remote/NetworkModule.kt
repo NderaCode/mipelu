@@ -3,6 +3,7 @@ package com.cocido.mipelu.data.remote
 import com.cocido.mipelu.BuildConfig
 import com.cocido.mipelu.data.remote.api.MiPeluApi
 import com.cocido.mipelu.data.remote.auth.AuthInterceptor
+import com.cocido.mipelu.data.remote.auth.SessionExpiredNotifier
 import com.cocido.mipelu.data.remote.auth.TokenAuthenticator
 import com.cocido.mipelu.data.remote.auth.TokenStore
 import dagger.Module
@@ -76,7 +77,8 @@ object NetworkModule {
     fun provideTokenAuthenticator(
         tokenStore: TokenStore,
         @RefreshClient refreshApi: MiPeluApi,
-    ): TokenAuthenticator = TokenAuthenticator(tokenStore, refreshApi)
+        sessionExpiredNotifier: SessionExpiredNotifier,
+    ): TokenAuthenticator = TokenAuthenticator(tokenStore, refreshApi, sessionExpiredNotifier)
 
     @Provides
     @Singleton
