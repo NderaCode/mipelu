@@ -255,6 +255,7 @@ private fun WorkFieldSection(
                 label = field.label,
                 placeholder = field.placeholder,
                 multiline = field.multiline,
+                keyboardType = field.keyboardType,
             )
         }
     }

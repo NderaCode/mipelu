@@ -1,5 +1,6 @@
 package com.cocido.mipelu.feature.workrecords
 
+import androidx.compose.ui.text.input.KeyboardType
 import com.cocido.mipelu.domain.model.ServiceType
 import com.cocido.mipelu.domain.model.WorkRecord
 
@@ -22,6 +23,7 @@ data class WorkFieldSpec(
     val multiline: Boolean = false,
     val getter: (WorkRecord) -> String,
     val setter: (WorkRecord, String) -> WorkRecord,
+    val keyboardType: KeyboardType = KeyboardType.Text,
 )
 
 val diagnosticoFields = listOf(
@@ -41,7 +43,14 @@ val formulaFields = listOf(
 
 val resultadoFields = listOf(
     WorkFieldSpec("Resultado final", "Cómo quedó el trabajo", true, { it.finalResult }, { w, v -> w.copy(finalResult = v) }),
-    WorkFieldSpec("Precio", "Ej: $ 20.000", false, { it.price }, { w, v -> w.copy(price = v) }),
+    WorkFieldSpec(
+        "Precio",
+        "Ej: 20.000 (usá punto para miles, coma para decimales)",
+        false,
+        { it.price },
+        { w, v -> w.copy(price = v) },
+        keyboardType = KeyboardType.Decimal,
+    ),
     WorkFieldSpec("Recomendaciones", "Cuidados para la clienta", true, { it.recommendations }, { w, v -> w.copy(recommendations = v) }),
     WorkFieldSpec("Próximo seguimiento", "Nota, no es un turno", false, { it.nextFollowUpNote }, { w, v -> w.copy(nextFollowUpNote = v) }),
 )
