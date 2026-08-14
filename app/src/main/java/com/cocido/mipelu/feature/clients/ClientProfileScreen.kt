@@ -14,26 +14,37 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cocido.mipelu.core.theme.ErrorLogout
 import com.cocido.mipelu.core.theme.NudeClaro
 import com.cocido.mipelu.core.theme.NudeTexto
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.BadgeTag
-import com.cocido.mipelu.core.ui.components.badgeContainerColor
-import com.cocido.mipelu.core.ui.components.badgeContentColor
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.SectionLabel
+import com.cocido.mipelu.core.ui.components.ServiceTypeBadgeRow
 import com.cocido.mipelu.core.ui.components.TopBarBack
+import com.cocido.mipelu.core.ui.components.miPeluCardShadow
+import androidx.compose.ui.semantics.semantics
 import com.cocido.mipelu.core.util.toShortDateEs
 import com.cocido.mipelu.domain.model.WorkRecord
 
@@ -46,10 +57,42 @@ fun ClientProfileScreen(
     viewModel: ClientProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
     val client = uiState.client
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    androidx.compose.runtime.LaunchedEffect(deleteError) {
+        deleteError?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
+    }
+
+    if (showDeleteConfirm && client != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("¿Eliminar a ${client.name}?") },
+            text = { Text("Se van a borrar también todos sus trabajos y fotos registrados. Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    viewModel.deleteClient(onBack)
+                }) { Text("Eliminar", color = ErrorLogout) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancelar") }
+            },
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TopBarBack(title = "Perfil de clienta", onBack = onBack)
+        TopBarBack(title = "Perfil de clienta", onBack = onBack) {
+            IconButton(onClick = { showDeleteConfirm = true }) {
+                Icon(
+                    Icons.Filled.DeleteOutline,
+                    contentDescription = "Eliminar clienta",
+                    tint = ErrorLogout,
+                )
+            }
+        }
         if (client == null) return@Column
 
         LazyColumn(
@@ -110,7 +153,7 @@ fun ClientProfileScreen(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surface,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().miPeluCardShadow(shape = MaterialTheme.shapes.medium),
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -157,18 +200,18 @@ private fun InfoField(label: String, value: String, modifier: Modifier = Modifie
 @Composable
 private fun ClientTimelineItem(work: WorkRecord, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .miPeluCardShadow(shape = MaterialTheme.shapes.medium)
+            .semantics(mergeDescendants = true) {}
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                BadgeTag(
-                    label = work.serviceType.label,
-                    containerColor = work.serviceType.badgeContainerColor(),
-                    contentColor = work.serviceType.badgeContentColor(),
-                )
+                ServiceTypeBadgeRow(types = work.serviceTypes)
                 Text(work.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (work.formula.isNotBlank()) {

@@ -1,6 +1,8 @@
 package com.cocido.mipelu.core.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,17 +26,19 @@ fun AvatarInitials(
     size: androidx.compose.ui.unit.Dp = 44.dp,
     containerColor: Color = NudeClaro,
     contentColor: Color = CiruelaMedio,
+    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall,
 ) {
     Box(
         modifier = modifier
             .size(size)
-            .background(containerColor, CircleShape),
+            .background(containerColor, CircleShape)
+            .border(BorderStroke(1.dp, contentColor.copy(alpha = 0.08f)), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = initials,
             color = contentColor,
-            style = MaterialTheme.typography.titleSmall,
+            style = textStyle,
         )
     }
 }

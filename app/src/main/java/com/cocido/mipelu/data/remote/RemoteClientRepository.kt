@@ -12,6 +12,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
@@ -38,9 +40,12 @@ class RemoteClientRepository @Inject constructor(
     private val refreshMutex = Mutex()
     private var hasLoadedOnce = false
 
+    private val _isLoading = MutableStateFlow(false)
+    override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     override fun observeClients(ownerUserId: String): Flow<List<Client>> =
         clients
-            .onStart { if (!hasLoadedOnce) refresh(ownerUserId) }
+            .onStart { if (!hasLoadedOnce) fetch(ownerUserId) }
             .map { list -> list.sortedBy { it.name } }
 
     override fun observeClient(clientId: String): Flow<Client?> =
@@ -65,18 +70,25 @@ class RemoteClientRepository @Inject constructor(
         clients.update { list -> list.filterNot { it.id == clientId } }
     }
 
+    override suspend fun refresh(ownerUserId: String) = fetch(ownerUserId, force = true)
+
     override fun clearCache() {
         hasLoadedOnce = false
         clients.value = emptyList()
     }
 
-    private suspend fun refresh(ownerUserId: String) = refreshMutex.withLock {
-        if (hasLoadedOnce) return@withLock
-        val summary = safeApiCall { api.listClients(limit = CLIENTS_PAGE_LIMIT) }
-        val details = coroutineScope {
-            summary.items.map { item -> async { safeApiCall { api.getClient(item.id) } } }.awaitAll()
+    private suspend fun fetch(ownerUserId: String, force: Boolean = false) = refreshMutex.withLock {
+        if (hasLoadedOnce && !force) return@withLock
+        _isLoading.value = true
+        try {
+            val summary = safeApiCall { api.listClients(limit = CLIENTS_PAGE_LIMIT) }
+            val details = coroutineScope {
+                summary.items.map { item -> async { safeApiCall { api.getClient(item.id) } } }.awaitAll()
+            }
+            clients.value = details.map { it.toDomain(ownerUserId) }
+            hasLoadedOnce = true
+        } finally {
+            _isLoading.value = false
         }
-        clients.value = details.map { it.toDomain(ownerUserId) }
-        hasLoadedOnce = true
     }
 }

@@ -16,6 +16,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
@@ -47,6 +49,9 @@ class RemoteWorkRecordRepository @Inject constructor(
     private val refreshMutex = Mutex()
     private var hasLoadedOnce = false
 
+    private val _isLoading = MutableStateFlow(false)
+    override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     // This app only ever has one logged-in user per process; ownerUserId is never returned by
     // the backend (ownership is implicit via the JWT), so we just remember the last one we saw.
     @Volatile
@@ -56,13 +61,13 @@ class RemoteWorkRecordRepository @Inject constructor(
         detailCache
             .onStart {
                 lastOwnerUserId = ownerUserId
-                if (!hasLoadedOnce) refresh()
+                if (!hasLoadedOnce) fetch()
             }
             .map { map -> map.values.map { it.toDomain(ownerUserId) }.sortedByDescending { it.date } }
 
     override fun observeWorksForClient(clientId: String): Flow<List<WorkRecord>> =
         detailCache
-            .onStart { if (!hasLoadedOnce) refresh() }
+            .onStart { if (!hasLoadedOnce) fetch() }
             .map { map ->
                 map.values.filter { it.clientId == clientId }
                     .map { it.toDomain(lastOwnerUserId) }
@@ -71,7 +76,7 @@ class RemoteWorkRecordRepository @Inject constructor(
 
     override fun observeWork(workId: String): Flow<WorkRecord?> =
         detailCache
-            .onStart { if (!hasLoadedOnce) refresh() }
+            .onStart { if (!hasLoadedOnce) fetch() }
             .map { map -> map[workId]?.toDomain(lastOwnerUserId) }
 
     override suspend fun upsertWork(work: WorkRecord): WorkRecord {
@@ -88,6 +93,11 @@ class RemoteWorkRecordRepository @Inject constructor(
     override suspend fun deleteWork(workId: String) {
         safeApiCall { api.deleteWorkRecord(workId) }
         detailCache.update { it - workId }
+    }
+
+    override suspend fun refresh(ownerUserId: String) {
+        lastOwnerUserId = ownerUserId
+        fetch(force = true)
     }
 
     override fun clearCache() {
@@ -130,13 +140,18 @@ class RemoteWorkRecordRepository @Inject constructor(
         detailCache.update { it + (dto.id to dto) }
     }
 
-    private suspend fun refresh() = refreshMutex.withLock {
-        if (hasLoadedOnce) return@withLock
-        val summary = safeApiCall { api.listWorkRecords(limit = WORK_RECORDS_PAGE_LIMIT) }
-        val details = coroutineScope {
-            summary.items.map { item -> async { safeApiCall { api.getWorkRecord(item.id) } } }.awaitAll()
+    private suspend fun fetch(force: Boolean = false) = refreshMutex.withLock {
+        if (hasLoadedOnce && !force) return@withLock
+        _isLoading.value = true
+        try {
+            val summary = safeApiCall { api.listWorkRecords(limit = WORK_RECORDS_PAGE_LIMIT) }
+            val details = coroutineScope {
+                summary.items.map { item -> async { safeApiCall { api.getWorkRecord(item.id) } } }.awaitAll()
+            }
+            detailCache.value = details.associateBy { it.id }
+            hasLoadedOnce = true
+        } finally {
+            _isLoading.value = false
         }
-        detailCache.value = details.associateBy { it.id }
-        hasLoadedOnce = true
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,6 +65,8 @@ fun ForgotPasswordScreen(
                     label = "Email",
                     placeholder = "tu@email.com",
                     keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Done,
+                    onDone = { if (!isLoading && email.isNotBlank()) viewModel.forgotPassword(email) },
                 )
                 errorMessage?.let {
                     Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)

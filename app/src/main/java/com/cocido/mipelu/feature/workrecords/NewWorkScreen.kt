@@ -1,6 +1,8 @@
 package com.cocido.mipelu.feature.workrecords
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,13 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -39,6 +43,7 @@ import com.cocido.mipelu.core.ui.components.MiPeluChip
 import com.cocido.mipelu.core.ui.components.MiPeluTextField
 import com.cocido.mipelu.core.ui.components.SectionLabel
 import com.cocido.mipelu.core.ui.components.TopBarBack
+import com.cocido.mipelu.core.ui.components.miPeluCardShadow
 import com.cocido.mipelu.core.util.toShortDateEs
 import com.cocido.mipelu.domain.model.ServiceType
 import com.cocido.mipelu.domain.model.WorkRecord
@@ -52,8 +57,14 @@ fun NewWorkScreen(
 ) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
     val clients by viewModel.clients.collectAsStateWithLifecycle()
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     var clientMenuExpanded by remember { mutableStateOf(false) }
+    var clientQuery by remember { mutableStateOf("") }
+    val filteredClients = remember(clients, clientQuery) {
+        if (clientQuery.isBlank()) clients else clients.filter { it.name.contains(clientQuery, ignoreCase = true) }
+    }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = draft.date)
@@ -85,19 +96,33 @@ fun NewWorkScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Clienta", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (draft.clientName.isBlank()) {
-                            Box {
-                                ReadOnlyField(
-                                    text = "Elegí una clienta",
-                                    background = MaterialTheme.colorScheme.surface,
-                                    textColor = MaterialTheme.miPeluColors.textoMuted,
-                                    onClick = { clientMenuExpanded = true },
+                            ExposedDropdownMenuBox(
+                                expanded = clientMenuExpanded && filteredClients.isNotEmpty(),
+                                onExpandedChange = { clientMenuExpanded = it },
+                            ) {
+                                OutlinedTextField(
+                                    value = clientQuery,
+                                    onValueChange = {
+                                        clientQuery = it
+                                        clientMenuExpanded = true
+                                    },
+                                    placeholder = { Text("Buscar clienta", color = MaterialTheme.miPeluColors.textoMuted) },
+                                    singleLine = true,
+                                    shape = MaterialTheme.shapes.small,
+                                    modifier = Modifier
+                                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                                        .fillMaxWidth(),
                                 )
-                                DropdownMenu(expanded = clientMenuExpanded, onDismissRequest = { clientMenuExpanded = false }) {
-                                    clients.forEach { client ->
+                                ExposedDropdownMenu(
+                                    expanded = clientMenuExpanded && filteredClients.isNotEmpty(),
+                                    onDismissRequest = { clientMenuExpanded = false },
+                                ) {
+                                    filteredClients.forEach { client ->
                                         DropdownMenuItem(
                                             text = { Text(client.name) },
                                             onClick = {
                                                 viewModel.selectClient(client)
+                                                clientQuery = ""
                                                 clientMenuExpanded = false
                                             },
                                         )
@@ -115,15 +140,16 @@ fun NewWorkScreen(
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Tipo de trabajo", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        androidx.compose.foundation.layout.FlowRow(
+                        FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             ServiceType.entries.forEach { type ->
                                 MiPeluChip(
                                     label = type.label,
-                                    selected = draft.serviceType == type,
-                                    onClick = { viewModel.selectServiceType(type) },
+                                    selected = draft.serviceTypes.contains(type),
+                                    onClick = { viewModel.toggleServiceType(type) },
+                                    multiSelect = true,
                                 )
                             }
                         }
@@ -141,7 +167,9 @@ fun NewWorkScreen(
             }
 
             item { WorkFieldSection(title = "Diagnóstico", fields = diagnosticoFields, draft = draft, onFieldChange = viewModel::updateField) }
-            item { WorkFieldSection(title = "Fórmula y productos", fields = formulaFields, draft = draft, onFieldChange = viewModel::updateField) }
+            if (draft.serviceTypes.any { it in ChemicalServiceTypes }) {
+                item { WorkFieldSection(title = "Fórmula y productos", fields = formulaFields, draft = draft, onFieldChange = viewModel::updateField) }
+            }
             item { WorkFieldSection(title = "Resultado", fields = resultadoFields, draft = draft, onFieldChange = viewModel::updateField) }
 
             item {
@@ -158,10 +186,18 @@ fun NewWorkScreen(
 
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    errorMessage?.let {
+                        Text(
+                            it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     MiPeluButton(
-                        text = "Guardar trabajo",
+                        text = if (isSaving) "Guardando..." else "Guardar trabajo",
                         onClick = { viewModel.save(asDraft = false, onSaved = onSaved) },
                         modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving && draft.clientId.isNotBlank() && draft.serviceTypes.isNotEmpty(),
                     )
                     MiPeluButton(
                         text = "Guardar borrador",
@@ -169,6 +205,7 @@ fun NewWorkScreen(
                         modifier = Modifier.fillMaxWidth(),
                         style = MiPeluButtonStyle.Text,
                         height = 44.dp,
+                        enabled = !isSaving,
                     )
                 }
             }
@@ -183,18 +220,23 @@ private fun ReadOnlyField(
     textColor: androidx.compose.ui.graphics.Color,
     onClick: (() -> Unit)?,
 ) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyLarge,
-        color = textColor,
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(52.dp)
+            .miPeluCardShadow(shape = MaterialTheme.shapes.small, elevation = 2.dp)
             .background(background, MaterialTheme.shapes.small)
+            .border(BorderStroke(1.dp, MaterialTheme.miPeluColors.bordeCampo), MaterialTheme.shapes.small)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .wrapContentWidth(Alignment.Start)
             .padding(horizontal = 14.dp),
-    )
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = textColor,
+        )
+    }
 }
 
 @Composable

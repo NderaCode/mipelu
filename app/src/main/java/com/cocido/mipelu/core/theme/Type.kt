@@ -78,3 +78,11 @@ val MiPeluTypography = Typography(
         letterSpacing = 0.4.sp,
     ),
 )
+
+// Título de pantalla (Clientas/Trabajos/Más): no calza en ningún slot de M3 Typography.
+val ScreenTitleStyle = TextStyle(
+    fontFamily = Roboto,
+    fontWeight = FontWeight.Bold,
+    fontSize = 26.sp,
+    letterSpacing = (-0.4).sp,
+)

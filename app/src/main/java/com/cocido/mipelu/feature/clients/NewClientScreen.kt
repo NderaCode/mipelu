@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -27,6 +28,8 @@ fun NewClientScreen(
     viewModel: NewClientViewModel = hiltViewModel(),
 ) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TopBarBack(title = "Nueva clienta", onBack = onBack)
@@ -44,11 +47,17 @@ fun NewClientScreen(
                     multiline = field.multiline,
                 )
             }
+            errorMessage?.let { message ->
+                item {
+                    Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
             item {
                 MiPeluButton(
-                    text = "Guardar clienta",
+                    text = if (isSaving) "Guardando..." else "Guardar clienta",
                     onClick = { viewModel.save(onSaved) },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = !isSaving,
                 )
             }
         }

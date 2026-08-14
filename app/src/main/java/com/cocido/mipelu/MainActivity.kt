@@ -13,8 +13,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -47,6 +50,18 @@ private fun MiPeluApp() {
 
     val currentTopLevel = topLevelDestinations.find { dest ->
         currentDestination?.hierarchy?.any { it.hasRoute(dest::class) } == true
+    }
+    // Inicio y Splash pintan un fondo oscuro detrás de la barra de estado (hero/splash a pantalla
+    // completa); el resto de la app usa fondo claro. Los íconos de la barra de estado tienen que
+    // cambiar de color según cuál esté visible, si no quedan invisibles sobre uno de los dos.
+    val isOverDarkBackground = currentTopLevel == MiPeluDestination.Home ||
+        currentDestination?.hierarchy?.any { it.hasRoute(MiPeluDestination.Splash::class) } == true
+    val view = LocalView.current
+    SideEffect {
+        WindowCompat.getInsetsController(
+            (view.context as android.app.Activity).window,
+            view,
+        ).isAppearanceLightStatusBars = !isOverDarkBackground
     }
 
     Scaffold(
@@ -81,7 +96,13 @@ private fun MiPeluApp() {
             }
         },
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding())) {
+        // Solo se aplica el padding inferior: cuando hay bottom nav, su propio inset de sistema ya
+        // está incluido en su altura medida; cuando no la hay (pantallas "empujadas" como Nuevo
+        // trabajo o Login), esto pasa el inset de la barra/gestos de navegación tal cual. El
+        // padding superior NO se aplica acá a propósito: cada pantalla decide si absorbe el inset
+        // de la barra de estado (TopBarBack, títulos) o si lo ignora para pintar debajo de ella
+        // (el hero de Inicio).
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding())) {
             MiPeluNavGraph(navController = navController)
         }
     }
