@@ -2,6 +2,7 @@ package com.cocido.mipelu.data.remote
 
 import com.cocido.mipelu.data.di.ApplicationScope
 import com.cocido.mipelu.data.remote.api.MiPeluApi
+import com.cocido.mipelu.data.remote.auth.SessionExpiredNotifier
 import com.cocido.mipelu.data.remote.auth.TokenStore
 import com.cocido.mipelu.data.remote.dto.ForgotPasswordRequest
 import com.cocido.mipelu.data.remote.dto.LoginRequest
@@ -29,6 +30,7 @@ class RemoteAuthRepository @Inject constructor(
     private val clientRepository: ClientRepository,
     private val workRecordRepository: WorkRecordRepository,
     private val userProfileRepository: UserProfileRepository,
+    private val sessionExpiredNotifier: SessionExpiredNotifier,
     @ApplicationScope private val appScope: CoroutineScope,
 ) : AuthRepository {
 
@@ -39,6 +41,16 @@ class RemoteAuthRepository @Inject constructor(
         // Auto-login: if a session was persisted from a previous run, restore it so
         // SplashScreen (which just checks currentUser.value != null) skips the login screen.
         appScope.launch { restoreSession() }
+
+        // TokenAuthenticator can't reach AuthRepository directly (would cycle back through the
+        // OkHttpClient it builds), so it signals here instead - a failed token refresh should
+        // drop the user to the login screen right away, not leave them "logged in" in the UI
+        // until the next 401 or app restart. logout() is safe to call even though the refresh
+        // token/tokenStore is already cleared: refreshToken will just read null, skipping the
+        // server-side revoke call.
+        appScope.launch {
+            sessionExpiredNotifier.sessionExpired.collect { logout() }
+        }
     }
 
     private suspend fun restoreSession() {
