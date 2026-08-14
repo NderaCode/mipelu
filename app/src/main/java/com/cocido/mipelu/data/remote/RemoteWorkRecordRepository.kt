@@ -3,6 +3,7 @@ package com.cocido.mipelu.data.remote
 import com.cocido.mipelu.data.remote.api.MiPeluApi
 import com.cocido.mipelu.data.remote.dto.PhotoDto
 import com.cocido.mipelu.data.remote.dto.WorkRecordDetailDto
+import com.cocido.mipelu.data.remote.dto.WorkRecordListItemDto
 import com.cocido.mipelu.data.remote.mapper.toCreateRequest
 import com.cocido.mipelu.data.remote.mapper.toDomain
 import com.cocido.mipelu.data.remote.mapper.toUpdateRequest
@@ -27,8 +28,8 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
-// The backend caps `limit` at 100 (see PaginationQueryDto) and 400s above that - a professional
-// with more than 100 work records won't see the rest until this repository does real pagination.
+// The backend caps `limit` at 100 (see PaginationQueryDto) and 400s above that, so fetch() pages
+// through in chunks of this size until `total` is covered.
 private const val WORK_RECORDS_PAGE_LIMIT = 100
 
 /**
@@ -150,9 +151,16 @@ class RemoteWorkRecordRepository @Inject constructor(
         if (hasLoadedOnce && !force) return@withLock
         _isLoading.value = true
         try {
-            val summary = safeApiCall { api.listWorkRecords(limit = WORK_RECORDS_PAGE_LIMIT) }
+            val summaries = mutableListOf<WorkRecordListItemDto>()
+            var page = 1
+            while (true) {
+                val response = safeApiCall { api.listWorkRecords(page = page, limit = WORK_RECORDS_PAGE_LIMIT) }
+                summaries += response.items
+                if (response.items.isEmpty() || summaries.size >= response.total) break
+                page++
+            }
             val details = coroutineScope {
-                summary.items.map { item -> async { safeApiCall { api.getWorkRecord(item.id) } } }.awaitAll()
+                summaries.map { item -> async { safeApiCall { api.getWorkRecord(item.id) } } }.awaitAll()
             }
             detailCache.value = details.associateBy { it.id }
             hasLoadedOnce = true

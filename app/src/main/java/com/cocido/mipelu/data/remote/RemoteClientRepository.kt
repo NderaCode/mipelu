@@ -1,6 +1,7 @@
 package com.cocido.mipelu.data.remote
 
 import com.cocido.mipelu.data.remote.api.MiPeluApi
+import com.cocido.mipelu.data.remote.dto.ClientListItemDto
 import com.cocido.mipelu.data.remote.mapper.toDomain
 import com.cocido.mipelu.data.remote.mapper.toUpsertRequest
 import com.cocido.mipelu.domain.model.Client
@@ -20,8 +21,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-// The backend caps `limit` at 100 (see PaginationQueryDto) and 400s above that - a professional
-// with more than 100 clients won't see the rest until this repository does real pagination.
+// The backend caps `limit` at 100 (see PaginationQueryDto) and 400s above that, so fetch() pages
+// through in chunks of this size until `total` is covered.
 private const val CLIENTS_PAGE_LIMIT = 100
 
 /**
@@ -87,9 +88,16 @@ class RemoteClientRepository @Inject constructor(
         if (hasLoadedOnce && !force) return@withLock
         _isLoading.value = true
         try {
-            val summary = safeApiCall { api.listClients(limit = CLIENTS_PAGE_LIMIT) }
+            val summaries = mutableListOf<ClientListItemDto>()
+            var page = 1
+            while (true) {
+                val response = safeApiCall { api.listClients(page = page, limit = CLIENTS_PAGE_LIMIT) }
+                summaries += response.items
+                if (response.items.isEmpty() || summaries.size >= response.total) break
+                page++
+            }
             val details = coroutineScope {
-                summary.items.map { item -> async { safeApiCall { api.getClient(item.id) } } }.awaitAll()
+                summaries.map { item -> async { safeApiCall { api.getClient(item.id) } } }.awaitAll()
             }
             clients.value = details.map { it.toDomain(ownerUserId) }
             hasLoadedOnce = true

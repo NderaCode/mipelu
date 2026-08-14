@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocido.mipelu.data.remote.mapper.toBackendPrice
 import com.cocido.mipelu.domain.model.Client
 import com.cocido.mipelu.domain.model.PhotoType
 import com.cocido.mipelu.domain.model.ServiceType
@@ -133,6 +134,10 @@ class NewWorkViewModel @Inject constructor(
         val ownerUserId = authRepository.currentUser.value?.id ?: return
         val current = _draft.value
         if (current.clientId.isBlank() || current.serviceTypes.isEmpty()) return
+        if (current.price.isNotBlank() && current.price.toBackendPrice() == null) {
+            _errorMessage.value = "El precio ingresado no es válido. Ejemplo: 20.000"
+            return
+        }
         _errorMessage.value = null
         viewModelScope.launch {
             _isSaving.value = true
