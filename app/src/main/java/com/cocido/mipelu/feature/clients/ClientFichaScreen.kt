@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -26,6 +27,8 @@ fun ClientFichaScreen(
     viewModel: ClientFichaViewModel = hiltViewModel(),
 ) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TopBarBack(title = "Ficha técnica", onBack = onBack)
@@ -43,11 +46,17 @@ fun ClientFichaScreen(
                     multiline = field.multiline,
                 )
             }
+            errorMessage?.let { message ->
+                item {
+                    Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
             item {
                 MiPeluButton(
-                    text = "Guardar cambios",
+                    text = if (isSaving) "Guardando..." else "Guardar cambios",
                     onClick = { viewModel.save(onSaved) },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = !isSaving,
                 )
             }
         }

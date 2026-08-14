@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.cocido.mipelu.core.theme.Morado
 import com.cocido.mipelu.core.theme.PillShape
 
 enum class MiPeluButtonStyle { Primary, Secondary, Text }
@@ -29,7 +30,7 @@ fun MiPeluButton(
     when (style) {
         MiPeluButtonStyle.Primary -> Button(
             onClick = onClick,
-            modifier = heightModifier,
+            modifier = if (enabled) heightModifier.miPeluGlowShadow(color = Morado, shape = shape) else heightModifier,
             enabled = enabled,
             shape = shape,
             colors = ButtonDefaults.buttonColors(
@@ -68,7 +69,7 @@ fun MiPeluPillButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(46.dp),
+        modifier = modifier.height(48.dp).miPeluGlowShadow(color = Morado, shape = PillShape),
         shape = PillShape,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 22.dp),
         colors = ButtonDefaults.buttonColors(

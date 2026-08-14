@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.cocido.mipelu.core.theme.miPeluColors
@@ -59,6 +60,8 @@ fun WorkListItem(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .miPeluCardShadow(shape = MaterialTheme.shapes.medium)
+            .semantics(mergeDescendants = true) {}
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
@@ -86,11 +89,7 @@ fun WorkListItem(
                         maxLines = 1,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    BadgeTag(
-                        label = work.serviceType.label,
-                        containerColor = work.serviceType.badgeContainerColor(),
-                        contentColor = work.serviceType.badgeContentColor(),
-                    )
+                    ServiceTypeBadgeRow(types = work.serviceTypes)
                 }
                 Text(
                     text = work.date.toShortDateEs(),

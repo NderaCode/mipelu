@@ -7,6 +7,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -14,6 +16,11 @@ import kotlinx.coroutines.flow.update
 class FakeClientRepository @Inject constructor() : ClientRepository {
 
     private val clients = MutableStateFlow(SeedData.clients)
+
+    // The in-memory dataset is always already "loaded" - there's nothing to fetch.
+    override val isLoading: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+
+    override suspend fun refresh(ownerUserId: String) = Unit
 
     override fun observeClients(ownerUserId: String): Flow<List<Client>> =
         clients.map { list -> list.filter { it.ownerUserId == ownerUserId }.sortedBy { it.name } }

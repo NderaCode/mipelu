@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val greetingName: String = "",
@@ -23,13 +24,14 @@ data class HomeUiState(
     val workCount: Int = 0,
     val photoCount: Int = 0,
     val recentWorks: List<WorkRecord> = emptyList(),
+    val isLoading: Boolean = false,
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    authRepository: AuthRepository,
-    clientRepository: ClientRepository,
-    workRecordRepository: WorkRecordRepository,
+    private val authRepository: AuthRepository,
+    private val clientRepository: ClientRepository,
+    private val workRecordRepository: WorkRecordRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = authRepository.currentUser
@@ -40,16 +42,27 @@ class HomeViewModel @Inject constructor(
                 combine(
                     clientRepository.observeClients(user.id),
                     workRecordRepository.observeWorks(user.id),
-                ) { clients, works ->
+                    clientRepository.isLoading,
+                    workRecordRepository.isLoading,
+                ) { clients, works, isLoadingClients, isLoadingWorks ->
                     HomeUiState(
                         greetingName = user.name.split(" ").firstOrNull().orEmpty(),
                         clientCount = clients.size,
                         workCount = works.size,
                         photoCount = works.sumOf { it.beforePhotoUrls.size + it.afterPhotoUrls.size },
                         recentWorks = works.take(3),
+                        isLoading = isLoadingClients || isLoadingWorks,
                     )
                 }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState(isLoading = true))
+
+    fun refresh() {
+        val ownerUserId = authRepository.currentUser.value?.id ?: return
+        viewModelScope.launch {
+            clientRepository.refresh(ownerUserId)
+            workRecordRepository.refresh(ownerUserId)
+        }
+    }
 }

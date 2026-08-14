@@ -102,6 +102,20 @@ class RemoteAuthRepository @Inject constructor(
         }
     }
 
+    override suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            safeApiCall { api.deleteAccount() }
+            _currentUser.value = null
+            tokenStore.clear()
+            clientRepository.clearCache()
+            workRecordRepository.clearCache()
+            userProfileRepository.clearCache()
+            Result.success(Unit)
+        } catch (e: MiPeluApiException) {
+            Result.failure(e)
+        }
+    }
+
     override fun logout() {
         val refreshToken = tokenStore.refreshToken
         _currentUser.value = null

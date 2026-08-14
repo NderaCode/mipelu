@@ -19,7 +19,7 @@ data class WorkRecordListItemDto(
     val id: String,
     val clientId: String,
     val clientName: String,
-    val serviceType: String,
+    val serviceTypes: List<String>,
     val date: String,
     val formulaSummary: String? = null,
     val beforeThumbnailUrl: String? = null,
@@ -39,7 +39,7 @@ data class WorkRecordDetailDto(
     val id: String,
     val clientId: String,
     val clientName: String,
-    val serviceType: String,
+    val serviceTypes: List<String>,
     val date: String,
     val hairCondition: String? = null,
     val baseColor: String? = null,
@@ -64,7 +64,7 @@ data class WorkRecordDetailDto(
 @Serializable
 data class CreateWorkRecordRequest(
     val clientId: String,
-    val serviceType: String,
+    val serviceTypes: List<String>,
     val date: String,
     val hairCondition: String? = null,
     val baseColor: String? = null,
@@ -85,7 +85,7 @@ data class CreateWorkRecordRequest(
 /** Body for PATCH /work-records/:id - same shape minus clientId, all optional. */
 @Serializable
 data class UpdateWorkRecordRequest(
-    val serviceType: String? = null,
+    val serviceTypes: List<String>? = null,
     val date: String? = null,
     val hairCondition: String? = null,
     val baseColor: String? = null,
