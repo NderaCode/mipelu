@@ -52,6 +52,9 @@ class RemoteWorkRecordRepository @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    override val error: StateFlow<String?> = _error.asStateFlow()
+
     // This app only ever has one logged-in user per process; ownerUserId is never returned by
     // the backend (ownership is implicit via the JWT), so we just remember the last one we saw.
     @Volatile
@@ -140,6 +143,9 @@ class RemoteWorkRecordRepository @Inject constructor(
         detailCache.update { it + (dto.id to dto) }
     }
 
+    // No catch here would let a network failure kill this cold flow's onStart{} permanently -
+    // every downstream collector (ViewModel combine/stateIn) would crash instead of seeing an
+    // error state. hasLoadedOnce stays false on failure so the next subscribe/refresh retries.
     private suspend fun fetch(force: Boolean = false) = refreshMutex.withLock {
         if (hasLoadedOnce && !force) return@withLock
         _isLoading.value = true
@@ -150,6 +156,9 @@ class RemoteWorkRecordRepository @Inject constructor(
             }
             detailCache.value = details.associateBy { it.id }
             hasLoadedOnce = true
+            _error.value = null
+        } catch (e: MiPeluApiException) {
+            _error.value = e.message
         } finally {
             _isLoading.value = false
         }

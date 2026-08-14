@@ -4,6 +4,7 @@ package com.cocido.mipelu.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocido.mipelu.domain.model.Client
 import com.cocido.mipelu.domain.model.WorkRecord
 import com.cocido.mipelu.domain.repository.AuthRepository
 import com.cocido.mipelu.domain.repository.ClientRepository
@@ -25,6 +26,16 @@ data class HomeUiState(
     val photoCount: Int = 0,
     val recentWorks: List<WorkRecord> = emptyList(),
     val isLoading: Boolean = false,
+    val error: String? = null,
+)
+
+// Kotlin's typed combine() overloads stop at 5 flows; clients+works+2 isLoading+2 error would be
+// 6. Grouping the "happy path" data into its own combine() and merging the two errors into a
+// second one keeps everything typed instead of falling back to the untyped vararg combine().
+private data class HomeData(
+    val clients: List<Client>,
+    val works: List<WorkRecord>,
+    val isLoading: Boolean,
 )
 
 @HiltViewModel
@@ -39,19 +50,28 @@ class HomeViewModel @Inject constructor(
             if (user == null) {
                 flowOf(HomeUiState())
             } else {
-                combine(
+                val dataFlow = combine(
                     clientRepository.observeClients(user.id),
                     workRecordRepository.observeWorks(user.id),
                     clientRepository.isLoading,
                     workRecordRepository.isLoading,
                 ) { clients, works, isLoadingClients, isLoadingWorks ->
+                    HomeData(clients, works, isLoadingClients || isLoadingWorks)
+                }
+                val errorFlow = combine(
+                    clientRepository.error,
+                    workRecordRepository.error,
+                ) { clientsError, worksError -> clientsError ?: worksError }
+
+                combine(dataFlow, errorFlow) { data, error ->
                     HomeUiState(
                         greetingName = user.name.split(" ").firstOrNull().orEmpty(),
-                        clientCount = clients.size,
-                        workCount = works.size,
-                        photoCount = works.sumOf { it.beforePhotoUrls.size + it.afterPhotoUrls.size },
-                        recentWorks = works.take(3),
-                        isLoading = isLoadingClients || isLoadingWorks,
+                        clientCount = data.clients.size,
+                        workCount = data.works.size,
+                        photoCount = data.works.sumOf { it.beforePhotoUrls.size + it.afterPhotoUrls.size },
+                        recentWorks = data.works.take(3),
+                        isLoading = data.isLoading,
+                        error = error,
                     )
                 }
             }

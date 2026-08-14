@@ -43,6 +43,9 @@ class RemoteClientRepository @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    override val error: StateFlow<String?> = _error.asStateFlow()
+
     override fun observeClients(ownerUserId: String): Flow<List<Client>> =
         clients
             .onStart { if (!hasLoadedOnce) fetch(ownerUserId) }
@@ -77,6 +80,9 @@ class RemoteClientRepository @Inject constructor(
         clients.value = emptyList()
     }
 
+    // No catch here would let a network failure kill this cold flow's onStart{} permanently -
+    // every downstream collector (ViewModel combine/stateIn) would crash instead of seeing an
+    // error state. hasLoadedOnce stays false on failure so the next subscribe/refresh retries.
     private suspend fun fetch(ownerUserId: String, force: Boolean = false) = refreshMutex.withLock {
         if (hasLoadedOnce && !force) return@withLock
         _isLoading.value = true
@@ -87,6 +93,9 @@ class RemoteClientRepository @Inject constructor(
             }
             clients.value = details.map { it.toDomain(ownerUserId) }
             hasLoadedOnce = true
+            _error.value = null
+        } catch (e: MiPeluApiException) {
+            _error.value = e.message
         } finally {
             _isLoading.value = false
         }

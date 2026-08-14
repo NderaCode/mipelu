@@ -25,8 +25,9 @@ data class WorkListUiState(
     val selectedType: ServiceType? = null,
     val availableTypes: List<ServiceType> = emptyList(),
     val isLoading: Boolean = false,
+    val error: String? = null,
 ) {
-    val isEmpty: Boolean get() = works.isEmpty() && !isLoading
+    val isEmpty: Boolean get() = works.isEmpty() && !isLoading && error == null
 }
 
 @HiltViewModel
@@ -43,7 +44,13 @@ class WorkListViewModel @Inject constructor(
             if (user == null) flowOf(emptyList()) else workRecordRepository.observeWorks(user.id)
         }
         .let { worksFlow ->
-            combine(worksFlow, searchQuery, selectedType, workRecordRepository.isLoading) { works, query, type, isLoading ->
+            combine(
+                worksFlow,
+                searchQuery,
+                selectedType,
+                workRecordRepository.isLoading,
+                workRecordRepository.error,
+            ) { works, query, type, isLoading, error ->
                 val filtered = works
                     .filter { type == null || it.serviceTypes.contains(type) }
                     .filter { w ->
@@ -58,6 +65,7 @@ class WorkListViewModel @Inject constructor(
                     selectedType = type,
                     availableTypes = works.flatMap { it.serviceTypes }.distinct(),
                     isLoading = isLoading,
+                    error = error,
                 )
             }
         }
