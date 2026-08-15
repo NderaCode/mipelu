@@ -1,10 +1,10 @@
-package com.cocido.mipelu.feature.clients
+package com.cocido.mipelu.feature.workrecords
 
 import app.cash.turbine.test
 import com.cocido.mipelu.MainDispatcherRule
 import com.cocido.mipelu.domain.model.UserProfile
 import com.cocido.mipelu.domain.repository.AuthRepository
-import com.cocido.mipelu.domain.repository.ClientRepository
+import com.cocido.mipelu.domain.repository.WorkRecordRepository
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-class ClientListViewModelTest {
+class WorkListViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -27,16 +27,13 @@ class ClientListViewModelTest {
         val authRepository = mockk<AuthRepository>()
         every { authRepository.currentUser } returns MutableStateFlow(user)
 
-        val clientRepository = mockk<ClientRepository>()
-        every { clientRepository.observeClients(any()) } returns flowOf(emptyList())
-        every { clientRepository.isLoading } returns MutableStateFlow(false)
-        every { clientRepository.error } returns
+        val workRecordRepository = mockk<WorkRecordRepository>()
+        every { workRecordRepository.observeWorks(any()) } returns flowOf(emptyList())
+        every { workRecordRepository.isLoading } returns MutableStateFlow(false)
+        every { workRecordRepository.error } returns
             MutableStateFlow("No se pudo conectar. Revisá tu conexión a internet.")
 
-        // Before the fix, ClientRepository had no `error` StateFlow at all - a network failure
-        // during observeClients()'s onStart{} fetch propagated uncaught into this ViewModel's
-        // combine/stateIn instead of ever reaching a collectAsStateWithLifecycle() in the UI.
-        val viewModel = ClientListViewModel(authRepository, clientRepository)
+        val viewModel = WorkListViewModel(authRepository, workRecordRepository)
 
         // UnconfinedTestDispatcher runs the combine/stateIn eagerly, so the seed placeholder
         // (isLoading = true) never surfaces as its own emission - the first item already
@@ -44,7 +41,7 @@ class ClientListViewModelTest {
         viewModel.uiState.test {
             val state = awaitItem()
             assertNotNull(state.error)
-            assertTrue(state.clients.isEmpty())
+            assertTrue(state.works.isEmpty())
             cancelAndIgnoreRemainingEvents()
         }
     }
