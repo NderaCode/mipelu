@@ -38,8 +38,10 @@ class ClientListViewModelTest {
         // combine/stateIn instead of ever reaching a collectAsStateWithLifecycle() in the UI.
         val viewModel = ClientListViewModel(authRepository, clientRepository)
 
+        // UnconfinedTestDispatcher runs the combine/stateIn eagerly, so the seed placeholder
+        // (isLoading = true) never surfaces as its own emission - the first item already
+        // reflects the real (error) state.
         viewModel.uiState.test {
-            awaitItem() // seed value from stateIn (isLoading = true) before combine runs
             val state = awaitItem()
             assertNotNull(state.error)
             assertTrue(state.clients.isEmpty())
