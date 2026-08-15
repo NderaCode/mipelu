@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cocido.mipelu.core.theme.TextoMuted
@@ -27,6 +28,7 @@ fun EmptyState(
     onCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector = Icons.Outlined.Info,
+    ctaTestTag: String? = null,
 ) {
     Column(
         modifier = modifier
@@ -51,6 +53,10 @@ fun EmptyState(
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(20.dp))
-        MiPeluPillButton(text = ctaLabel, onClick = onCtaClick)
+        MiPeluPillButton(
+            text = ctaLabel,
+            onClick = onCtaClick,
+            modifier = if (ctaTestTag != null) Modifier.testTag(ctaTestTag) else Modifier,
+        )
     }
 }

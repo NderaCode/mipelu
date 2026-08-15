@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.cocido.mipelu.core.theme.miPeluColors
@@ -97,6 +98,8 @@ fun BeforeAfterPhotos(
     onAfterUrlPicked: (String) -> Unit,
     modifier: Modifier = Modifier,
     photoHeight: androidx.compose.ui.unit.Dp = 120.dp,
+    beforeTestTag: String? = null,
+    afterTestTag: String? = null,
 ) {
     val pickBefore = rememberPhotoPickerLauncher(onBeforeUrlPicked)
     val pickAfter = rememberPhotoPickerLauncher(onAfterUrlPicked)
@@ -107,14 +110,14 @@ fun BeforeAfterPhotos(
             photoUrl = beforeUrl,
             placeholder = "Antes",
             onClick = { pickBefore.launch(request) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).let { if (beforeTestTag != null) it.testTag(beforeTestTag) else it },
             height = photoHeight,
         )
         PhotoSlot(
             photoUrl = afterUrl,
             placeholder = "Después",
             onClick = { pickAfter.launch(request) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).let { if (afterTestTag != null) it.testTag(afterTestTag) else it },
             height = photoHeight,
         )
     }

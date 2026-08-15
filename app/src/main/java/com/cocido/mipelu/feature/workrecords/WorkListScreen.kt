@@ -28,11 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.EmptyState
 import com.cocido.mipelu.core.ui.components.MiPeluChip
 import com.cocido.mipelu.core.ui.components.MiPeluSearchField
@@ -66,6 +68,7 @@ fun WorkListScreen(
             value = uiState.searchQuery,
             onValueChange = viewModel::onSearchChange,
             placeholder = "Buscar por clienta, fórmula o trabajo",
+            modifier = Modifier.testTag(TestTags.WORK_LIST_SEARCH_FIELD),
         )
         Spacer(Modifier.height(8.dp))
         LazyRow(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -94,6 +97,7 @@ fun WorkListScreen(
                     ctaLabel = "Reintentar",
                     onCtaClick = viewModel::refresh,
                     icon = Icons.Filled.CloudOff,
+                    ctaTestTag = TestTags.WORK_LIST_ERROR_RETRY,
                 )
             } else if (uiState.isEmpty) {
                 EmptyState(
@@ -112,6 +116,7 @@ fun WorkListScreen(
                         WorkListItem(
                             work = work,
                             onClick = { onWorkClick(work.id) },
+                            modifier = Modifier.testTag(TestTags.workListItem(work.id)),
                             showFormulaSummary = true,
                             photoSize = 40.dp,
                         )

@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.FondoApp
 import com.cocido.mipelu.core.theme.Superficie
+import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.MiPeluTextField
@@ -95,6 +97,7 @@ fun LoginScreen(
                         placeholder = "tu@email.com",
                         keyboardType = KeyboardType.Email,
                         containerColor = FondoApp,
+                        modifier = Modifier.testTag(TestTags.LOGIN_EMAIL_FIELD),
                     )
                     Spacer(Modifier.height(18.dp))
                     MiPeluTextField(
@@ -106,6 +109,7 @@ fun LoginScreen(
                         containerColor = FondoApp,
                         imeAction = ImeAction.Done,
                         onDone = { if (!isLoading) viewModel.login(email, password, onLoginSuccess) },
+                        modifier = Modifier.testTag(TestTags.LOGIN_PASSWORD_FIELD),
                     )
                     Spacer(Modifier.height(14.dp))
                     Text(
@@ -121,21 +125,21 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag(TestTags.LOGIN_ERROR_MESSAGE),
                         )
                     }
                     Spacer(Modifier.height(28.dp))
                     MiPeluButton(
                         text = if (isLoading) "Ingresando..." else "Iniciar sesión",
                         onClick = { viewModel.login(email, password, onLoginSuccess) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag(TestTags.LOGIN_SUBMIT_BUTTON),
                         enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                     )
                     Spacer(Modifier.height(6.dp))
                     MiPeluButton(
                         text = "Crear cuenta",
                         onClick = onGoToSignUp,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag(TestTags.LOGIN_SIGNUP_BUTTON),
                         style = MiPeluButtonStyle.Text,
                     )
                 }

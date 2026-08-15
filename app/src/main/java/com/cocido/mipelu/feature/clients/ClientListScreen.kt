@@ -34,11 +34,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.BadgeTag
 import com.cocido.mipelu.core.ui.components.EmptyState
@@ -75,6 +77,7 @@ fun ClientListScreen(
             value = uiState.searchQuery,
             onValueChange = viewModel::onSearchChange,
             placeholder = "Buscar clienta",
+            modifier = Modifier.testTag(TestTags.CLIENT_LIST_SEARCH_FIELD),
         )
         Spacer(Modifier.height(8.dp))
         LazyRow(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -104,6 +107,7 @@ fun ClientListScreen(
                     ctaLabel = "Reintentar",
                     onCtaClick = viewModel::refresh,
                     icon = Icons.Filled.CloudOff,
+                    ctaTestTag = TestTags.CLIENT_LIST_ERROR_RETRY,
                 )
             } else if (uiState.isEmpty) {
                 EmptyState(
@@ -132,6 +136,7 @@ private fun ClientListItem(client: Client, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(TestTags.clientListItem(client.id))
             .miPeluCardShadow(shape = MaterialTheme.shapes.medium)
             .semantics(mergeDescendants = true) {}
             .clickable(onClick = onClick),

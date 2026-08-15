@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.CiruelaProfundo
 import com.cocido.mipelu.core.theme.Morado
 import com.cocido.mipelu.core.theme.RosaDorado
+import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.EmptyState
 import com.cocido.mipelu.core.ui.components.SectionLabel
@@ -75,6 +76,7 @@ fun HomeScreen(
                 onCtaClick = viewModel::refresh,
                 icon = Icons.Filled.CloudOff,
                 modifier = Modifier.weight(1f),
+                ctaTestTag = TestTags.HOME_ERROR_RETRY,
             )
         }
     } else {
