@@ -14,9 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluTextField
 import com.cocido.mipelu.core.ui.components.TopBarBack
@@ -45,6 +47,11 @@ fun NewClientScreen(
                     label = field.label,
                     placeholder = field.placeholder,
                     multiline = field.multiline,
+                    modifier = if (field === nuevaClientaFields.first()) {
+                        Modifier.testTag(TestTags.NEW_CLIENT_NAME_FIELD)
+                    } else {
+                        Modifier
+                    },
                 )
             }
             errorMessage?.let { message ->
@@ -56,7 +63,7 @@ fun NewClientScreen(
                 MiPeluButton(
                     text = if (isSaving) "Guardando..." else "Guardar clienta",
                     onClick = { viewModel.save(onSaved) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(TestTags.NEW_CLIENT_SAVE_BUTTON),
                     enabled = !isSaving,
                 )
             }

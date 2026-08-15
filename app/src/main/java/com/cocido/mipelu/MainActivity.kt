@@ -17,6 +17,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,6 +28,7 @@ import com.cocido.mipelu.core.navigation.MiPeluDestination
 import com.cocido.mipelu.core.navigation.MiPeluNavGraph
 import com.cocido.mipelu.core.navigation.topLevelDestinations
 import com.cocido.mipelu.core.theme.MiPeluTheme
+import com.cocido.mipelu.core.ui.TestTags
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -88,6 +90,7 @@ private fun MiPeluApp() {
             if (fabAction != null) {
                 FloatingActionButton(
                     onClick = fabAction,
+                    modifier = Modifier.testTag(TestTags.FAB_ADD),
                     containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                     contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
                 ) {

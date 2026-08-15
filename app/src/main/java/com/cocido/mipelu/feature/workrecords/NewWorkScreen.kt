@@ -31,11 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.FondoBorrador
 import com.cocido.mipelu.core.theme.miPeluColors
+import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.BeforeAfterPhotos
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
@@ -180,6 +182,8 @@ fun NewWorkScreen(
                         afterUrl = draft.afterPhotoUrls.firstOrNull(),
                         onBeforeUrlPicked = viewModel::setBeforePhoto,
                         onAfterUrlPicked = viewModel::setAfterPhoto,
+                        beforeTestTag = TestTags.NEW_WORK_BEFORE_PHOTO_SLOT,
+                        afterTestTag = TestTags.NEW_WORK_AFTER_PHOTO_SLOT,
                     )
                 }
             }
@@ -196,7 +200,7 @@ fun NewWorkScreen(
                     MiPeluButton(
                         text = if (isSaving) "Guardando..." else "Guardar trabajo",
                         onClick = { viewModel.save(asDraft = false, onSaved = onSaved) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag(TestTags.NEW_WORK_SAVE_BUTTON),
                         enabled = !isSaving && draft.clientId.isNotBlank() && draft.serviceTypes.isNotEmpty(),
                     )
                     MiPeluButton(
