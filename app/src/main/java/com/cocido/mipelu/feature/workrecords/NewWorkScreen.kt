@@ -89,6 +89,7 @@ fun NewWorkScreen(
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TopBarBack(title = if (draft.id.isBlank()) "Nuevo trabajo" else "Editar trabajo", onBack = onBack)
         LazyColumn(
+            modifier = Modifier.testTag(TestTags.NEW_WORK_FORM_LIST),
             contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 110.dp),
             verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
@@ -113,7 +114,8 @@ fun NewWorkScreen(
                                     shape = MaterialTheme.shapes.small,
                                     modifier = Modifier
                                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                                        .fillMaxWidth(),
+                                        .fillMaxWidth()
+                                        .testTag(TestTags.NEW_WORK_CLIENT_SEARCH_FIELD),
                                 )
                                 ExposedDropdownMenu(
                                     expanded = clientMenuExpanded && filteredClients.isNotEmpty(),

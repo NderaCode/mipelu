@@ -37,6 +37,8 @@ object TestTags {
     fun workListItem(workId: String) = "work_list_item_$workId"
 
     // New work
+    const val NEW_WORK_FORM_LIST = "new_work_form_list"
+    const val NEW_WORK_CLIENT_SEARCH_FIELD = "new_work_client_search_field"
     const val NEW_WORK_SAVE_BUTTON = "new_work_save_button"
     const val NEW_WORK_BEFORE_PHOTO_SLOT = "new_work_before_photo_slot"
     const val NEW_WORK_AFTER_PHOTO_SLOT = "new_work_after_photo_slot"
