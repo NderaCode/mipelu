@@ -80,6 +80,21 @@ android {
         compose = true
         buildConfig = true
     }
+    packaging {
+        // MockK's androidTest artifact pulls in junit-jupiter transitively (unused directly -
+        // this project's instrumented tests are JUnit4/Hilt), and several of its jars ship the
+        // same META-INF license files, which fails the androidTest APK's resource merge.
+        resources {
+            excludes += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+            )
+        }
+    }
 }
 
 dependencies {
