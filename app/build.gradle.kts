@@ -1,5 +1,5 @@
-import java.util.Properties
 import org.gradle.kotlin.dsl.dependencies
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,17 +8,20 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.ktlint)
 }
 
 // Release signing credentials live outside the repo (see keystore.properties, gitignored).
 // Falls back to null signing when the file is absent so debug builds / CI checkouts without
 // the secret still compile - only `assembleRelease`/`bundleRelease` actually need it.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = Properties().apply {
-    if (keystorePropertiesFile.exists()) {
-        keystorePropertiesFile.inputStream().use { load(it) }
+val keystoreProperties =
+    Properties().apply {
+        if (keystorePropertiesFile.exists()) {
+            keystorePropertiesFile.inputStream().use { load(it) }
+        }
     }
-}
 
 android {
     namespace = "com.cocido.mipelu"
@@ -57,7 +60,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
@@ -85,14 +88,15 @@ android {
         // this project's instrumented tests are JUnit4/Hilt), and several of its jars ship the
         // same META-INF license files, which fails the androidTest APK's resource merge.
         resources {
-            excludes += setOf(
-                "META-INF/LICENSE.md",
-                "META-INF/LICENSE-notice.md",
-                "META-INF/LICENSE",
-                "META-INF/LICENSE.txt",
-                "META-INF/NOTICE",
-                "META-INF/NOTICE.txt",
-            )
+            excludes +=
+                setOf(
+                    "META-INF/LICENSE.md",
+                    "META-INF/LICENSE-notice.md",
+                    "META-INF/LICENSE",
+                    "META-INF/LICENSE.txt",
+                    "META-INF/NOTICE",
+                    "META-INF/NOTICE.txt",
+                )
         }
     }
 }
@@ -137,4 +141,25 @@ dependencies {
     kaptAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+detekt {
+    // buildUponDefaultConfig: detekt's own defaults are reasonable for a Compose/Hilt codebase;
+    // detekt.yml only overrides the one rule (FunctionNaming) that misfires on @Composable's
+    // PascalCase convention, everything else stays at detekt's default.
+    buildUponDefaultConfig = true
+    config.setFrom(file("detekt.yml"))
+    // Retrofitted onto an existing codebase - the baseline grandfathers in every issue that
+    // already existed so CI gates on new issues only, not a backlog nobody signed up to fix.
+    baseline = file("detekt-baseline.xml")
+    source.setFrom("src/main/java", "src/test/java", "src/androidTest/java")
+}
+
+ktlint {
+    version.set("1.3.1")
+    // Same reasoning as detekt's baseline: retrofitting ktlint onto an existing codebase without
+    // one would mean either reformatting hundreds of already-working files in one unreviewed pass
+    // (tried it, the diff touched 100+ files with no behavior change - reverted) or starting CI
+    // permanently red. The baseline grandfathers today's style as-is; only new code is held to it.
+    baseline.set(file("ktlint-baseline.xml"))
 }

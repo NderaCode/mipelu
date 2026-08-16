@@ -1,0 +1,144 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>EnumNaming:PhotoType.kt$PhotoType$after</ID>
+    <ID>EnumNaming:PhotoType.kt$PhotoType$before</ID>
+    <ID>LongMethod:BottomNavBar.kt$@Composable fun MiPeluBottomNavBar( currentDestination: MiPeluDestination, onTabSelected: (MiPeluDestination) -&gt; Unit, viewModel: BottomNavViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:ClientListScreen.kt$@Composable fun ClientListScreen( onClientClick: (String) -&gt; Unit, onAddClient: () -&gt; Unit, viewModel: ClientListViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:ClientProfileScreen.kt$@Composable fun ClientProfileScreen( onBack: () -&gt; Unit, onNuevoTrabajo: (clientId: String) -&gt; Unit, onEditarFicha: (clientId: String) -&gt; Unit, onWorkClick: (String) -&gt; Unit, viewModel: ClientProfileViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable fun HomeScreen( onNuevaClienta: () -&gt; Unit, onNuevoTrabajo: () -&gt; Unit, onBuscarHistorial: () -&gt; Unit, onWorkClick: (String) -&gt; Unit, viewModel: HomeViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:LoginScreen.kt$@Composable fun LoginScreen( onBack: () -&gt; Unit, onLoginSuccess: () -&gt; Unit, onGoToSignUp: () -&gt; Unit, onForgotPassword: () -&gt; Unit, viewModel: AuthViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:MiPeluNavGraph.kt$@Composable fun MiPeluNavGraph(navController: NavHostController)</ID>
+    <ID>LongMethod:NewWorkScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun NewWorkScreen( onBack: () -&gt; Unit, onSaved: () -&gt; Unit, viewModel: NewWorkViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:SettingsScreen.kt$@Composable fun SettingsScreen( onLoggedOut: () -&gt; Unit, viewModel: SettingsViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:SignUpScreen.kt$@Composable fun SignUpScreen( onBack: () -&gt; Unit, onSignUpSuccess: () -&gt; Unit, viewModel: AuthViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:WorkDetailScreen.kt$@Composable fun WorkDetailScreen( onBack: () -&gt; Unit, onEdit: (workId: String) -&gt; Unit, onDuplicate: (workId: String) -&gt; Unit, viewModel: WorkDetailViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:WorkListScreen.kt$@Composable fun WorkListScreen( onWorkClick: (String) -&gt; Unit, onAddWork: () -&gt; Unit, viewModel: WorkListViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:Atoms.kt$( initials: String, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 44.dp, containerColor: Color = NudeClaro, contentColor: Color = CiruelaMedio, textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall, )</ID>
+    <ID>LongParameterList:BeforeAfterPhotos.kt$( beforeUrl: String?, afterUrl: String?, onBeforeUrlPicked: (String) -&gt; Unit, onAfterUrlPicked: (String) -&gt; Unit, modifier: Modifier = Modifier, photoHeight: androidx.compose.ui.unit.Dp = 120.dp, beforeTestTag: String? = null, afterTestTag: String? = null, )</ID>
+    <ID>LongParameterList:EmptyState.kt$( title: String, subtitle: String, ctaLabel: String, onCtaClick: () -&gt; Unit, modifier: Modifier = Modifier, icon: ImageVector = Icons.Outlined.Info, ctaTestTag: String? = null, )</ID>
+    <ID>LongParameterList:MiPeluButton.kt$( text: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier, style: MiPeluButtonStyle = MiPeluButtonStyle.Primary, height: androidx.compose.ui.unit.Dp = 52.dp, shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp), enabled: Boolean = true, )</ID>
+    <ID>LongParameterList:MiPeluTextField.kt$( value: String, onValueChange: (String) -&gt; Unit, label: String, modifier: Modifier = Modifier, placeholder: String = "", multiline: Boolean = false, readOnly: Boolean = false, isPassword: Boolean = false, keyboardType: KeyboardType = KeyboardType.Text, visualTransformation: VisualTransformation = VisualTransformation.None, containerColor: Color = MaterialTheme.colorScheme.surface, // Por defecto, cualquier campo de una sola línea pasa el foco al siguiente con "Siguiente" // (WCAG 2.4.3 / mejor UX de teclado); el último campo de un formulario debe pisar esto con // ImeAction.Done + onDone para disparar el submit en vez de solo bajar el foco. imeAction: ImeAction = if (multiline) ImeAction.Default else ImeAction.Next, onDone: (() -&gt; Unit)? = null, )</ID>
+    <ID>LongParameterList:RemoteAuthRepository.kt$RemoteAuthRepository$( private val api: MiPeluApi, private val tokenStore: TokenStore, private val clientRepository: ClientRepository, private val workRecordRepository: WorkRecordRepository, private val userProfileRepository: UserProfileRepository, private val sessionExpiredNotifier: SessionExpiredNotifier, @ApplicationScope private val appScope: CoroutineScope, )</ID>
+    <ID>MagicNumber:ApiCall.kt$400</ID>
+    <ID>MagicNumber:ApiCall.kt$401</ID>
+    <ID>MagicNumber:ApiCall.kt$403</ID>
+    <ID>MagicNumber:ApiCall.kt$404</ID>
+    <ID>MagicNumber:ApiCall.kt$409</ID>
+    <ID>MagicNumber:ApiCall.kt$500</ID>
+    <ID>MagicNumber:ApiCall.kt$599</ID>
+    <ID>MagicNumber:ByteFormat.kt$1024</ID>
+    <ID>MagicNumber:ClientListViewModel.kt$ClientListViewModel$5000</ID>
+    <ID>MagicNumber:ClientProfileViewModel.kt$ClientProfileViewModel$5000</ID>
+    <ID>MagicNumber:Color.kt$0xFF2B1B26</ID>
+    <ID>MagicNumber:Color.kt$0xFF3D1638</ID>
+    <ID>MagicNumber:Color.kt$0xFF4F6753</ID>
+    <ID>MagicNumber:Color.kt$0xFF5C2350</ID>
+    <ID>MagicNumber:Color.kt$0xFF5C3A22</ID>
+    <ID>MagicNumber:Color.kt$0xFF6B2B58</ID>
+    <ID>MagicNumber:Color.kt$0xFF79695F</ID>
+    <ID>MagicNumber:Color.kt$0xFF8C2F45</ID>
+    <ID>MagicNumber:Color.kt$0xFF8C4A63</ID>
+    <ID>MagicNumber:Color.kt$0xFF9C5730</ID>
+    <ID>MagicNumber:Color.kt$0xFFA79A8E</ID>
+    <ID>MagicNumber:Color.kt$0xFFD8B8C9</ID>
+    <ID>MagicNumber:Color.kt$0xFFE8B594</ID>
+    <ID>MagicNumber:Color.kt$0xFFE8CFE0</ID>
+    <ID>MagicNumber:Color.kt$0xFFEDE6D9</ID>
+    <ID>MagicNumber:Color.kt$0xFFF0DCCB</ID>
+    <ID>MagicNumber:Color.kt$0xFFF1E8DE</ID>
+    <ID>MagicNumber:Color.kt$0xFFF3E4D8</ID>
+    <ID>MagicNumber:Color.kt$0xFFF7F1EA</ID>
+    <ID>MagicNumber:Color.kt$0xFFFFFFFF</ID>
+    <ID>MagicNumber:HomeScreen.kt$0.65f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeViewModel$3</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeViewModel$5000</ID>
+    <ID>MagicNumber:NewWorkViewModel.kt$NewWorkViewModel$5000</ID>
+    <ID>MagicNumber:RemoteAuthRepository.kt$RemoteAuthRepository$401</ID>
+    <ID>MagicNumber:SeedData.kt$SeedData$10</ID>
+    <ID>MagicNumber:SeedData.kt$SeedData$18</ID>
+    <ID>MagicNumber:SeedData.kt$SeedData$3</ID>
+    <ID>MagicNumber:SettingsViewModel.kt$SettingsViewModel$5000</ID>
+    <ID>MagicNumber:SplashScreen.kt$900</ID>
+    <ID>MagicNumber:UserProfile.kt$UserProfile$1024</ID>
+    <ID>MagicNumber:WorkDetailViewModel.kt$WorkDetailViewModel$5000</ID>
+    <ID>MagicNumber:WorkListViewModel.kt$WorkListViewModel$5000</ID>
+    <ID>MagicNumber:WorkRecordMapper.kt$3</ID>
+    <ID>MatchingDeclarationName:ApiCall.kt$MiPeluApiException : Exception</ID>
+    <ID>MatchingDeclarationName:ClientFieldSpecs.kt$ClientFieldSpec</ID>
+    <ID>MatchingDeclarationName:DashboardDto.kt$DashboardResponse</ID>
+    <ID>MatchingDeclarationName:MiPeluButton.kt$MiPeluButtonStyle</ID>
+    <ID>MatchingDeclarationName:MiPeluDestinations.kt$MiPeluDestination</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Alergias o sensibilidad", "Ej: alergia a la PPD", true, { it.allergies }, { c, v -&gt; c.copy(allergies = v) })</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Color base", "Ej: castaño natural nivel 5", false, { it.baseColor }, { c, v -&gt; c.copy(baseColor = v) })</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Notas importantes", "Lo que no querés olvidar", true, { it.importantNotes }, { c, v -&gt; c.copy(importantNotes = v) })</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Observaciones profesionales", "", true, { it.importantNotes }, { c, v -&gt; c.copy(importantNotes = v) })</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Preferencias", "Tonos y técnicas que le gustan", true, { it.preferences }, { c, v -&gt; c.copy(preferences = v) })</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Productos que funcionaron", "", true, { it.productsThatWorked }, { c, v -&gt; c.copy(productsThatWorked = v) })</ID>
+    <ID>MaxLineLength:ClientFieldSpecs.kt$ClientFieldSpec("Tipo de cabello", "Ej: ondulado, grueso", false, { it.hairType }, { c, v -&gt; c.copy(hairType = v) })</ID>
+    <ID>MaxLineLength:ClientListScreen.kt$Text(client.name, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:ClientListScreen.kt$Text(lastLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Row</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Text(client.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Text(client.phone, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Text(work.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Text(work.formula, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$Text(work.price, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:ClientProfileScreen.kt$text = { Text("Se van a borrar también todos sus trabajos y fotos registrados. Esta acción no se puede deshacer.") }</ID>
+    <ID>MaxLineLength:ClientProfileViewModelTest.kt$ClientProfileViewModelTest$)</ID>
+    <ID>MaxLineLength:ClientProfileViewModelTest.kt$ClientProfileViewModelTest$workRecordRepository: WorkRecordRepository = mockk { every { observeWorksForClient(any()) } returns flowOf(emptyList()) }</ID>
+    <ID>MaxLineLength:HomeScreen.kt$Text(text = label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:HomeScreen.kt$Text(text = value.toString(), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)</ID>
+    <ID>MaxLineLength:MiPeluChip.kt$val shadowModifier = if (selected) Modifier.miPeluGlowShadow(color = Morado, shape = PillShape, elevation = 6.dp) else Modifier</ID>
+    <ID>MaxLineLength:MiPeluSearchField.kt$leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.miPeluColors.textoMuted) }</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$Text("Clienta", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$Text("Fecha", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$Text("Tipo de trabajo", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$item { WorkFieldSection(title = "Diagnóstico", fields = diagnosticoFields, draft = draft, onFieldChange = viewModel::updateField) }</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$item { WorkFieldSection(title = "Fórmula y productos", fields = formulaFields, draft = draft, onFieldChange = viewModel::updateField) }</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$item { WorkFieldSection(title = "Resultado", fields = resultadoFields, draft = draft, onFieldChange = viewModel::updateField) }</ID>
+    <ID>MaxLineLength:NewWorkScreen.kt$placeholder = { Text("Buscar clienta", color = MaterialTheme.miPeluColors.textoMuted) }</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$"${p.storageUsedBytes.toHumanReadableSize()} de ${p.storageLimitBytes.toHumanReadableSize()}"</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$AvatarInitials(initials = p.initials, size = 52.dp, containerColor = CiruelaMedio, contentColor = Superficie)</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$Text(p.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$Text(p.professionalName.ifBlank { p.name }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$text = { Text("Se van a borrar todas tus clientas, trabajos y fotos de forma permanente. Esta acción no se puede deshacer.") }</ID>
+    <ID>MaxLineLength:WorkDetailScreen.kt$Text(current.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:WorkDetailScreen.kt$Text(title.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:WorkDetailScreen.kt$Text(value.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Color base", "Ej: castaño natural nivel 5", false, { it.baseColor }, { w, v -&gt; w.copy(baseColor = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Estado del cabello", "Ej: sano, con puntas resecas", false, { it.hairCondition }, { w, v -&gt; w.copy(hairCondition = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Notas del diagnóstico", "Otras observaciones antes de empezar", true, { it.notes }, { w, v -&gt; w.copy(notes = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Objetivo del trabajo", "Qué buscamos lograr", true, { it.objective }, { w, v -&gt; w.copy(objective = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Oxidante / volumen", "Ej: 20 vol", false, { it.oxidantVolume }, { w, v -&gt; w.copy(oxidantVolume = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Productos usados", "Marca y línea de producto", true, { it.productsUsed }, { w, v -&gt; w.copy(productsUsed = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Próximo seguimiento", "Nota, no es un turno", false, { it.nextFollowUpNote }, { w, v -&gt; w.copy(nextFollowUpNote = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Recomendaciones", "Cuidados para la clienta", true, { it.recommendations }, { w, v -&gt; w.copy(recommendations = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Resultado final", "Cómo quedó el trabajo", true, { it.finalResult }, { w, v -&gt; w.copy(finalResult = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Tiempo de exposición", "Ej: 35 min", false, { it.exposureTime }, { w, v -&gt; w.copy(exposureTime = v) })</ID>
+    <ID>MaxLineLength:WorkFieldSpecs.kt$WorkFieldSpec("Técnica aplicada", "Ej: balayage a mano libre", false, { it.technique }, { w, v -&gt; w.copy(technique = v) })</ID>
+    <ID>MaxLineLength:WorkListItem.kt$modifier = Modifier.size(size).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))</ID>
+    <ID>MaxLineLength:WorkListScreen.kt$MiPeluChip(label = "Todas", selected = uiState.selectedType == null, onClick = { viewModel.onTypeSelected(null) })</ID>
+    <ID>MaxLineLength:WorkListScreen.kt$MiPeluChip(label = type.label, selected = uiState.selectedType == type, onClick = { viewModel.onTypeSelected(type) })</ID>
+    <ID>ReturnCount:FakeAuthRepository.kt$FakeAuthRepository$override suspend fun login(email: String, password: String): Result&lt;UserProfile&gt;</ID>
+    <ID>ReturnCount:NewWorkViewModel.kt$NewWorkViewModel$fun save(asDraft: Boolean, onSaved: () -&gt; Unit)</ID>
+    <ID>ReturnCount:TokenAuthenticator.kt$TokenAuthenticator$override fun authenticate(route: Route?, response: Response): okhttp3.Request?</ID>
+    <ID>SwallowedException:ApiCall.kt$e: HttpException</ID>
+    <ID>SwallowedException:ApiCall.kt$e: IOException</ID>
+    <ID>SwallowedException:RemoteAuthRepository.kt$RemoteAuthRepository$e: Exception</ID>
+    <ID>SwallowedException:TokenAuthenticator.kt$TokenAuthenticator$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ClientFichaViewModel.kt$ClientFichaViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ClientProfileViewModel.kt$ClientProfileViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NewClientViewModel.kt$NewClientViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NewWorkViewModel.kt$NewWorkViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RemoteAuthRepository.kt$RemoteAuthRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SettingsViewModel.kt$SettingsViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TokenAuthenticator.kt$TokenAuthenticator$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WorkDetailViewModel.kt$WorkDetailViewModel$e: Exception</ID>
+    <ID>TooManyFunctions:MiPeluApi.kt$MiPeluApi</ID>
+    <ID>UnusedParameter:Theme.kt$darkTheme: Boolean = false</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,5 @@
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase by convention (they read as a type, not a verb) -
+    # without this, detekt would flag every composable in the codebase forever, baseline or not.
+    ignoreAnnotated: ['Composable']
