@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocido.mipelu.core.ui.components.PhotoUploadState
 import com.cocido.mipelu.data.remote.mapper.toBackendPrice
 import com.cocido.mipelu.domain.model.Client
 import com.cocido.mipelu.domain.model.PhotoType
@@ -59,6 +60,12 @@ class NewWorkViewModel @Inject constructor(
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _beforePhotoUploadState = MutableStateFlow(PhotoUploadState.Idle)
+    val beforePhotoUploadState: StateFlow<PhotoUploadState> = _beforePhotoUploadState.asStateFlow()
+
+    private val _afterPhotoUploadState = MutableStateFlow(PhotoUploadState.Idle)
+    val afterPhotoUploadState: StateFlow<PhotoUploadState> = _afterPhotoUploadState.asStateFlow()
 
     val clients: StateFlow<List<Client>> = authRepository.currentUser
         .flatMapLatest { user -> if (user == null) flowOf(emptyList()) else clientRepository.observeClients(user.id) }
@@ -141,6 +148,8 @@ class NewWorkViewModel @Inject constructor(
         _errorMessage.value = null
         viewModelScope.launch {
             _isSaving.value = true
+            _beforePhotoUploadState.value = PhotoUploadState.Idle
+            _afterPhotoUploadState.value = PhotoUploadState.Idle
             try {
                 // The backend needs a real work record id before it'll accept a photo upload, so
                 // the record is saved first and any freshly-picked (still-local) photo is uploaded
@@ -148,33 +157,49 @@ class NewWorkViewModel @Inject constructor(
                 var saved = workRecordRepository.upsertWork(
                     current.copy(ownerUserId = ownerUserId, isDraft = asDraft),
                 )
-
-                current.beforePhotoUrls.firstOrNull()
-                    ?.takeIf { it.isNotBlank() && !it.startsWith("http") }
-                    ?.let { localUri ->
-                        readUriBytes(localUri)?.let { (bytes, mimeType) ->
-                            saved = workRecordRepository.uploadPhoto(
-                                saved.id, PhotoType.before, bytes, mimeType, "before.jpg",
-                            )
-                        }
-                    }
-
-                current.afterPhotoUrls.firstOrNull()
-                    ?.takeIf { it.isNotBlank() && !it.startsWith("http") }
-                    ?.let { localUri ->
-                        readUriBytes(localUri)?.let { (bytes, mimeType) ->
-                            saved = workRecordRepository.uploadPhoto(
-                                saved.id, PhotoType.after, bytes, mimeType, "after.jpg",
-                            )
-                        }
-                    }
-
+                saved = uploadPhotoIfLocal(
+                    saved = saved,
+                    localUrl = current.beforePhotoUrls.firstOrNull(),
+                    type = PhotoType.before,
+                    fileName = "before.jpg",
+                    uploadState = _beforePhotoUploadState,
+                )
+                saved = uploadPhotoIfLocal(
+                    saved = saved,
+                    localUrl = current.afterPhotoUrls.firstOrNull(),
+                    type = PhotoType.after,
+                    fileName = "after.jpg",
+                    uploadState = _afterPhotoUploadState,
+                )
                 onSaved()
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "No se pudo guardar el trabajo. Probá de nuevo."
             } finally {
                 _isSaving.value = false
             }
+        }
+    }
+
+    /** No-op (returns [saved] unchanged) when [localUrl] is blank or already an uploaded http(s)
+     * URL - only freshly-picked, still-local URIs need uploading. */
+    private suspend fun uploadPhotoIfLocal(
+        saved: WorkRecord,
+        localUrl: String?,
+        type: PhotoType,
+        fileName: String,
+        uploadState: MutableStateFlow<PhotoUploadState>,
+    ): WorkRecord {
+        val localUri = localUrl?.takeIf { it.isNotBlank() && !it.startsWith("http") } ?: return saved
+        uploadState.value = PhotoUploadState.Uploading
+        try {
+            val result = readUriBytes(localUri)?.let { (bytes, mimeType) ->
+                workRecordRepository.uploadPhoto(saved.id, type, bytes, mimeType, fileName)
+            } ?: saved
+            uploadState.value = PhotoUploadState.Done
+            return result
+        } catch (e: Exception) {
+            uploadState.value = PhotoUploadState.Failed
+            throw e
         }
     }
 

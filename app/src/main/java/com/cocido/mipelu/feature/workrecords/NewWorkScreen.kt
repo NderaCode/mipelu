@@ -61,6 +61,8 @@ fun NewWorkScreen(
     val clients by viewModel.clients.collectAsStateWithLifecycle()
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val beforePhotoUploadState by viewModel.beforePhotoUploadState.collectAsStateWithLifecycle()
+    val afterPhotoUploadState by viewModel.afterPhotoUploadState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     var clientMenuExpanded by remember { mutableStateOf(false) }
     var clientQuery by remember { mutableStateOf("") }
@@ -186,6 +188,8 @@ fun NewWorkScreen(
                         onAfterUrlPicked = viewModel::setAfterPhoto,
                         beforeTestTag = TestTags.NEW_WORK_BEFORE_PHOTO_SLOT,
                         afterTestTag = TestTags.NEW_WORK_AFTER_PHOTO_SLOT,
+                        beforeUploadState = beforePhotoUploadState,
+                        afterUploadState = afterPhotoUploadState,
                     )
                 }
             }
