@@ -1,5 +1,6 @@
 package com.cocido.mipelu.core.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +34,7 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .animateContentSize()
             .padding(horizontal = 20.dp, vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

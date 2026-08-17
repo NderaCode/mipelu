@@ -1,5 +1,9 @@
 package com.cocido.mipelu.feature.home
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,12 +65,19 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val isErrorMode = uiState.error != null && uiState.clientCount == 0 && uiState.workCount == 0
+
     PullToRefreshBox(
         isRefreshing = uiState.isLoading,
         onRefresh = viewModel::refresh,
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
     ) {
-    if (uiState.error != null && uiState.clientCount == 0 && uiState.workCount == 0) {
+    AnimatedContent(
+        targetState = isErrorMode,
+        label = "homeContent",
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+    ) { errorMode ->
+    if (errorMode) {
         Column(modifier = Modifier.fillMaxSize()) {
             HeroHeader(greetingName = uiState.greetingName)
             EmptyState(
@@ -144,10 +155,11 @@ fun HomeScreen(
                 WorkListItem(
                     work = work,
                     onClick = { onWorkClick(work.id) },
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp).animateItem(),
                 )
             }
         }
+    }
     }
     }
     }

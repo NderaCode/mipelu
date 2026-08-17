@@ -1,5 +1,9 @@
 package com.cocido.mipelu.feature.workrecords
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,43 +90,54 @@ fun WorkListScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxWidth().weight(1f),
         ) {
-            if (uiState.isLoading && uiState.works.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            } else if (uiState.error != null && uiState.works.isEmpty()) {
-                EmptyState(
-                    title = "No se pudieron cargar los trabajos",
-                    subtitle = uiState.error.orEmpty(),
-                    ctaLabel = "Reintentar",
-                    onCtaClick = viewModel::refresh,
-                    icon = Icons.Filled.CloudOff,
-                    ctaTestTag = TestTags.WORK_LIST_ERROR_RETRY,
-                )
-            } else if (uiState.isEmpty) {
-                EmptyState(
-                    title = "Todavía no hay trabajos registrados",
-                    subtitle = "Guardá el primer trabajo para empezar a construir el historial.",
-                    ctaLabel = "Nuevo trabajo",
-                    onCtaClick = onAddWork,
-                    icon = Icons.Filled.Work,
-                )
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(uiState.works, key = { it.id }) { work ->
-                        WorkListItem(
-                            work = work,
-                            onClick = { onWorkClick(work.id) },
-                            modifier = Modifier.testTag(TestTags.workListItem(work.id)),
-                            showFormulaSummary = true,
-                            photoSize = 40.dp,
-                        )
+            val mode = when {
+                uiState.isLoading && uiState.works.isEmpty() -> WorkListMode.Loading
+                uiState.error != null && uiState.works.isEmpty() -> WorkListMode.Error
+                uiState.isEmpty -> WorkListMode.Empty
+                else -> WorkListMode.Loaded
+            }
+            AnimatedContent(
+                targetState = mode,
+                label = "workListContent",
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+            ) { targetMode ->
+                when (targetMode) {
+                    WorkListMode.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                    WorkListMode.Error -> EmptyState(
+                        title = "No se pudieron cargar los trabajos",
+                        subtitle = uiState.error.orEmpty(),
+                        ctaLabel = "Reintentar",
+                        onCtaClick = viewModel::refresh,
+                        icon = Icons.Filled.CloudOff,
+                        ctaTestTag = TestTags.WORK_LIST_ERROR_RETRY,
+                    )
+                    WorkListMode.Empty -> EmptyState(
+                        title = "Todavía no hay trabajos registrados",
+                        subtitle = "Guardá el primer trabajo para empezar a construir el historial.",
+                        ctaLabel = "Nuevo trabajo",
+                        onCtaClick = onAddWork,
+                        icon = Icons.Filled.Work,
+                    )
+                    WorkListMode.Loaded -> LazyColumn(
+                        contentPadding = PaddingValues(bottom = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(uiState.works, key = { it.id }) { work ->
+                            WorkListItem(
+                                work = work,
+                                onClick = { onWorkClick(work.id) },
+                                modifier = Modifier.testTag(TestTags.workListItem(work.id)).animateItem(),
+                                showFormulaSummary = true,
+                                photoSize = 40.dp,
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+private enum class WorkListMode { Loading, Error, Empty, Loaded }

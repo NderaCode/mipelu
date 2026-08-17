@@ -1,5 +1,10 @@
 package com.cocido.mipelu.feature.clients
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -96,34 +101,47 @@ fun ClientListScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxWidth().weight(1f),
         ) {
-            if (uiState.isLoading && uiState.clients.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            } else if (uiState.error != null && uiState.clients.isEmpty()) {
-                EmptyState(
-                    title = "No se pudieron cargar las clientas",
-                    subtitle = uiState.error.orEmpty(),
-                    ctaLabel = "Reintentar",
-                    onCtaClick = viewModel::refresh,
-                    icon = Icons.Filled.CloudOff,
-                    ctaTestTag = TestTags.CLIENT_LIST_ERROR_RETRY,
-                )
-            } else if (uiState.isEmpty) {
-                EmptyState(
-                    title = "Todavía no cargaste clientas",
-                    subtitle = "Agregá tu primera clienta para empezar a guardar su historial.",
-                    ctaLabel = "Agregar clienta",
-                    onCtaClick = onAddClient,
-                    icon = Icons.Filled.People,
-                )
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(uiState.clients, key = { it.id }) { client ->
-                        ClientListItem(client = client, onClick = { onClientClick(client.id) })
+            val mode = when {
+                uiState.isLoading && uiState.clients.isEmpty() -> ClientListMode.Loading
+                uiState.error != null && uiState.clients.isEmpty() -> ClientListMode.Error
+                uiState.isEmpty -> ClientListMode.Empty
+                else -> ClientListMode.Loaded
+            }
+            AnimatedContent(
+                targetState = mode,
+                label = "clientListContent",
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+            ) { targetMode ->
+                when (targetMode) {
+                    ClientListMode.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                    ClientListMode.Error -> EmptyState(
+                        title = "No se pudieron cargar las clientas",
+                        subtitle = uiState.error.orEmpty(),
+                        ctaLabel = "Reintentar",
+                        onCtaClick = viewModel::refresh,
+                        icon = Icons.Filled.CloudOff,
+                        ctaTestTag = TestTags.CLIENT_LIST_ERROR_RETRY,
+                    )
+                    ClientListMode.Empty -> EmptyState(
+                        title = "Todavía no cargaste clientas",
+                        subtitle = "Agregá tu primera clienta para empezar a guardar su historial.",
+                        ctaLabel = "Agregar clienta",
+                        onCtaClick = onAddClient,
+                        icon = Icons.Filled.People,
+                    )
+                    ClientListMode.Loaded -> LazyColumn(
+                        contentPadding = PaddingValues(bottom = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(uiState.clients, key = { it.id }) { client ->
+                            ClientListItem(
+                                client = client,
+                                onClick = { onClientClick(client.id) },
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
                 }
             }
@@ -131,10 +149,12 @@ fun ClientListScreen(
     }
 }
 
+private enum class ClientListMode { Loading, Error, Empty, Loaded }
+
 @Composable
-private fun ClientListItem(client: Client, onClick: () -> Unit) {
+private fun ClientListItem(client: Client, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag(TestTags.clientListItem(client.id))
             .miPeluCardShadow(shape = MaterialTheme.shapes.medium)
