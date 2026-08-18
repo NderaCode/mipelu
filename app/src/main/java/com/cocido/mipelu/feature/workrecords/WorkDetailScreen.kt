@@ -1,7 +1,6 @@
 package com.cocido.mipelu.feature.workrecords
 
 import android.content.Intent
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,9 +9,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.EventNote
+import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,16 +30,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.ErrorLogout
+import com.cocido.mipelu.core.theme.Mauve
 import com.cocido.mipelu.core.ui.components.BeforeAfterPhotos
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.ServiceTypeBadgeRow
 import com.cocido.mipelu.core.ui.components.TopBarBack
+import com.cocido.mipelu.core.ui.components.miPeluCardShadow
 import com.cocido.mipelu.core.util.toShortDateEs
 import com.cocido.mipelu.domain.model.WorkRecord
 
@@ -85,6 +92,17 @@ fun WorkDetailScreen(
         }
         val current = work ?: return@Column
 
+        // Solo se muestran las secciones/campos que la clienta realmente tiene cargados. Un
+        // "Corte" nunca completa fórmula/oxidante/tiempo (esos campos ni se le piden en Nuevo
+        // trabajo - ver ChemicalServiceTypes), así que la card de fórmula directamente no se
+        // arma en vez de mostrarse llena de guiones.
+        val isChemical = current.serviceTypes.any { it in ChemicalServiceTypes }
+        val diagnosticoRows = diagnosticoFields.filter { it.getter(current).isNotBlank() }
+        val formulaRows = if (isChemical) formulaFields.filter { it.getter(current).isNotBlank() } else emptyList()
+        val seguimientoFields = resultadoFields.filter { it.label !in setOf("Resultado final", "Precio") }
+        val seguimientoRows = seguimientoFields.filter { it.getter(current).isNotBlank() }
+        val hasHighlight = current.finalResult.isNotBlank() || current.price.isNotBlank()
+
         LazyColumn(
             contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -95,7 +113,11 @@ fun WorkDetailScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(current.date.toShortDateEs(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        current.date.toShortDateEs(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     ServiceTypeBadgeRow(types = current.serviceTypes)
                 }
             }
@@ -108,29 +130,28 @@ fun WorkDetailScreen(
                     photoHeight = 160.dp,
                 )
             }
-            item {
-                DetailCard(title = "Fórmula") {
-                    InfoRow("Fórmula", current.formula)
-                    InfoRow("Productos", current.productsUsed)
-                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                        InfoRow("Oxidante / volumen", current.oxidantVolume, Modifier.weight(1f))
-                        InfoRow("Tiempo", current.exposureTime, Modifier.weight(1f))
+            if (hasHighlight) {
+                item { ResultHighlightCard(finalResult = current.finalResult, price = current.price) }
+            }
+            if (diagnosticoRows.isNotEmpty()) {
+                item {
+                    DetailCard(title = "Diagnóstico", icon = Icons.AutoMirrored.Outlined.FactCheck) {
+                        diagnosticoRows.forEach { InfoRow(it.label, it.getter(current)) }
                     }
-                    InfoRow("Técnica aplicada", current.technique)
                 }
             }
-            item {
-                DetailCard(title = "Diagnóstico") {
-                    InfoRow("Estado del cabello", current.hairCondition)
-                    InfoRow("Objetivo del trabajo", current.objective)
+            if (formulaRows.isNotEmpty()) {
+                item {
+                    DetailCard(title = "Fórmula y productos", icon = Icons.Outlined.Science) {
+                        formulaRows.forEach { InfoRow(it.label, it.getter(current)) }
+                    }
                 }
             }
-            item {
-                DetailCard(title = "Resultado") {
-                    InfoRow("Resultado final", current.finalResult)
-                    InfoRow("Precio", current.price)
-                    InfoRow("Recomendaciones", current.recommendations)
-                    InfoRow("Próximo seguimiento", current.nextFollowUpNote)
+            if (seguimientoRows.isNotEmpty()) {
+                item {
+                    DetailCard(title = "Seguimiento", icon = Icons.AutoMirrored.Outlined.EventNote) {
+                        seguimientoRows.forEach { InfoRow(it.label, it.getter(current)) }
+                    }
                 }
             }
             item {
@@ -181,17 +202,76 @@ private fun shareWorkSummary(context: android.content.Context, work: WorkRecord)
     context.startActivity(Intent.createChooser(intent, "Compartir resumen"))
 }
 
+/**
+ * Resultado y precio son los dos datos que una profesional quiere ver de un vistazo al abrir un
+ * trabajo viejo - se destacan arriba de todo en vez de perderse como una fila más entre
+ * "Recomendaciones" y "Próximo seguimiento".
+ */
 @Composable
-private fun DetailCard(title: String, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+private fun ResultHighlightCard(finalResult: String, price: String) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().miPeluCardShadow(shape = MaterialTheme.shapes.medium),
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            content()
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (finalResult.isNotBlank()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "RESULTADO",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Mauve,
+                    )
+                    Text(
+                        finalResult,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            }
+            if (price.isNotBlank()) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "PRECIO",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Mauve,
+                    )
+                    Text(
+                        price,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailCard(
+    title: String,
+    icon: ImageVector,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth().miPeluCardShadow(shape = MaterialTheme.shapes.medium),
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(icon, contentDescription = null, tint = Mauve, modifier = Modifier.size(18.dp))
+                Text(
+                    title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Mauve,
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { content() }
         }
     }
 }
@@ -200,6 +280,6 @@ private fun DetailCard(title: String, content: @Composable androidx.compose.foun
 private fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
     }
 }
