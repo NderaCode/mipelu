@@ -33,8 +33,8 @@ android {
         applicationId = "com.cocido.mipelu"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.1"
 
         testInstrumentationRunner = "com.cocido.mipelu.HiltTestRunner"
     }
