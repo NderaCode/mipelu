@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocido.mipelu.core.ui.components.PhotoUploadState
+import com.cocido.mipelu.core.util.compressImage
 import com.cocido.mipelu.data.remote.mapper.toBackendPrice
 import com.cocido.mipelu.domain.model.Client
 import com.cocido.mipelu.domain.model.PhotoType
@@ -19,6 +20,7 @@ import com.cocido.mipelu.domain.repository.WorkRecordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class NewWorkViewModel @Inject constructor(
@@ -203,10 +206,11 @@ class NewWorkViewModel @Inject constructor(
         }
     }
 
-    private fun readUriBytes(uriString: String): Pair<ByteArray, String>? {
-        val uri = uriString.toUri()
-        val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
-        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
-        return bytes to mimeType
-    }
+    /** Runs off the main thread: decoding/scaling/re-encoding a camera photo is CPU-bound and can
+     * take real time. Compression also strips EXIF (including GPS) - see [compressImage]. */
+    private suspend fun readUriBytes(uriString: String): Pair<ByteArray, String>? =
+        withContext(Dispatchers.Default) {
+            val bytes = compressImage(context.contentResolver, uriString.toUri()) ?: return@withContext null
+            bytes to "image/jpeg"
+        }
 }

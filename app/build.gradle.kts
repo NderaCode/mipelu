@@ -126,6 +126,7 @@ dependencies {
     // directly for both build types, just at Level.NONE in release via BuildConfig.DEBUG.
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.exifinterface)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
