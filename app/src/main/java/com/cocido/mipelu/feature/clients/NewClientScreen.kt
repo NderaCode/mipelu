@@ -67,7 +67,11 @@ fun NewClientScreen(
                 }
                 errorMessage?.let { message ->
                     item {
-                        Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
                 }
                 item {

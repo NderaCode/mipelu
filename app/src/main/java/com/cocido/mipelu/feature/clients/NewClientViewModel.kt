@@ -54,12 +54,13 @@ class NewClientViewModel @Inject constructor(
 
     fun save(onSaved: () -> Unit) {
         val ownerUserId = authRepository.currentUser.value?.id ?: return
-        if (isBlockedByLimit.value) {
-            _errorMessage.value = "Alcanzaste el límite de clientas del plan gratuito."
-            return
+        val blockingMessage = when {
+            isBlockedByLimit.value -> "Alcanzaste el límite de clientas del plan gratuito."
+            _draft.value.name.isBlank() -> "Ingresá al menos el nombre de la clienta."
+            else -> null
         }
-        if (_draft.value.name.isBlank()) {
-            _errorMessage.value = "Ingresá al menos el nombre de la clienta."
+        if (blockingMessage != null) {
+            _errorMessage.value = blockingMessage
             return
         }
         _errorMessage.value = null

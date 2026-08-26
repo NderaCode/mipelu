@@ -10,6 +10,9 @@ import java.io.ByteArrayOutputStream
 
 private const val MAX_DIMENSION_PX = 1600
 private const val JPEG_QUALITY = 85
+private const val ROTATE_90 = 90f
+private const val ROTATE_180 = 180f
+private const val ROTATE_270 = 270f
 
 /**
  * Downsamples and re-encodes the photo at [uri] as JPEG, capped at [MAX_DIMENSION_PX] on its
@@ -21,29 +24,33 @@ private const val JPEG_QUALITY = 85
  * Returns null if [uri] can't be opened or decoded (e.g. permission revoked, corrupt file).
  */
 fun compressImage(contentResolver: ContentResolver, uri: Uri): ByteArray? {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        ?: return null
-    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-
-    val decodeOptions = BitmapFactory.Options().apply {
-        inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, MAX_DIMENSION_PX)
-    }
-    var bitmap = contentResolver.openInputStream(uri)?.use {
-        BitmapFactory.decodeStream(it, null, decodeOptions)
-    } ?: return null
-
-    val orientation = contentResolver.openInputStream(uri)?.use {
-        ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-    } ?: ExifInterface.ORIENTATION_NORMAL
-    bitmap = applyExifRotation(bitmap, orientation)
-    bitmap = scaleToMaxDimension(bitmap, MAX_DIMENSION_PX)
+    val sampled = decodeSampledBitmap(contentResolver, uri, MAX_DIMENSION_PX) ?: return null
+    val orientation = readExifOrientation(contentResolver, uri)
+    val bitmap = scaleToMaxDimension(applyExifRotation(sampled, orientation), MAX_DIMENSION_PX)
 
     return ByteArrayOutputStream().use { output ->
         bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, output)
         output.toByteArray()
     }.also { bitmap.recycle() }
 }
+
+private fun decodeSampledBitmap(contentResolver: ContentResolver, uri: Uri, maxDimension: Int): Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    val hasValidBounds = contentResolver.openInputStream(uri)?.use {
+        BitmapFactory.decodeStream(it, null, bounds)
+    } != null && bounds.outWidth > 0 && bounds.outHeight > 0
+    if (!hasValidBounds) return null
+
+    val decodeOptions = BitmapFactory.Options().apply {
+        inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, maxDimension)
+    }
+    return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, decodeOptions) }
+}
+
+private fun readExifOrientation(contentResolver: ContentResolver, uri: Uri): Int =
+    contentResolver.openInputStream(uri)?.use {
+        ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+    } ?: ExifInterface.ORIENTATION_NORMAL
 
 /** inSampleSize must be a power of two; halves it until the long side is just under [maxDimension]. */
 private fun calculateInSampleSize(width: Int, height: Int, maxDimension: Int): Int {
@@ -59,9 +66,9 @@ private fun calculateInSampleSize(width: Int, height: Int, maxDimension: Int): I
 private fun applyExifRotation(bitmap: Bitmap, orientation: Int): Bitmap {
     val matrix = Matrix()
     when (orientation) {
-        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(ROTATE_90)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(ROTATE_180)
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(ROTATE_270)
         ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
         ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
         else -> return bitmap
