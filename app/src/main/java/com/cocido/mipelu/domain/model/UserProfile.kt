@@ -13,4 +13,7 @@ data class UserProfile(
 ) {
     val initials: String
         get() = name.trim().firstOrNull()?.uppercase() ?: "?"
+
+    val isPro: Boolean
+        get() = plan == "pro"
 }

@@ -30,6 +30,7 @@ object TestTags {
     // New client
     const val NEW_CLIENT_NAME_FIELD = "new_client_name_field"
     const val NEW_CLIENT_SAVE_BUTTON = "new_client_save_button"
+    const val NEW_CLIENT_LIMIT_NOTICE = "new_client_limit_notice"
 
     // Work list
     const val WORK_LIST_SEARCH_FIELD = "work_list_search_field"
