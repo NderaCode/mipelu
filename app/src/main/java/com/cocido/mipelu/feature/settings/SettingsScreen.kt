@@ -42,6 +42,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.ErrorLogout
 import com.cocido.mipelu.core.theme.CiruelaMedio
+import com.cocido.mipelu.core.theme.NudeClaro
+import com.cocido.mipelu.core.theme.NudeTexto
 import com.cocido.mipelu.core.theme.Superficie
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.MiPeluButton
@@ -64,6 +66,7 @@ fun SettingsScreen(
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
+    val verificationMessage by viewModel.verificationMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val comingSoon = { Toast.makeText(context, "Disponible próximamente", Toast.LENGTH_SHORT).show() }
     var showEditProfile by remember { mutableStateOf(false) }
@@ -71,6 +74,13 @@ fun SettingsScreen(
 
     LaunchedEffect(deleteError) {
         deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
+    }
+
+    LaunchedEffect(verificationMessage) {
+        verificationMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearVerificationMessage()
+        }
     }
 
     if (showEditProfile && profile != null) {
@@ -132,6 +142,35 @@ fun SettingsScreen(
                             Text(p.professionalName.ifBlank { p.name }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                             Text(p.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
+                    }
+                }
+            }
+        }
+        if (profile?.emailVerified == false) {
+            item {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = NudeClaro,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Verificá tu email",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = NudeTexto,
+                            )
+                            Text(
+                                "Te va a servir para no perder el acceso a tu cuenta.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NudeTexto,
+                            )
+                        }
+                        TextButton(onClick = { viewModel.resendVerification() }) { Text("Reenviar") }
                     }
                 }
             }

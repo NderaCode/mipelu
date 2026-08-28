@@ -10,6 +10,7 @@ data class UserProfileDto(
     val email: String,
     val professionalName: String,
     val plan: String,
+    val emailVerified: Boolean,
     val createdAt: String,
 )
 

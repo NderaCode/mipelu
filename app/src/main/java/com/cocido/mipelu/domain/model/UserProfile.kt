@@ -7,6 +7,7 @@ data class UserProfile(
     val professionalName: String = "",
     val photoUrl: String? = null,
     val plan: String = "free",
+    val emailVerified: Boolean = false,
     val storageUsedBytes: Long = 0L,
     val storageLimitBytes: Long = 2L * 1024 * 1024 * 1024,
     val createdAt: Long = System.currentTimeMillis(),

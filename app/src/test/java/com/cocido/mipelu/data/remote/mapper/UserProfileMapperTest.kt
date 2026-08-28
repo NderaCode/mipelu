@@ -12,6 +12,7 @@ private fun userProfileDto() = UserProfileDto(
     email = "qa@test.com",
     professionalName = "QA",
     plan = "free",
+    emailVerified = false,
     createdAt = "2026-07-20T07:04:33.123Z",
 )
 

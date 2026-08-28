@@ -14,6 +14,7 @@ fun UserProfileDto.toDomain(storage: StorageUsageDto?): UserProfile = UserProfil
     professionalName = professionalName,
     photoUrl = null,
     plan = plan,
+    emailVerified = emailVerified,
     storageUsedBytes = storage?.usedBytes ?: 0L,
     storageLimitBytes = storage?.limitBytes ?: DEFAULT_STORAGE_LIMIT_BYTES,
     createdAt = createdAt.isoDateTimeToMillis(),

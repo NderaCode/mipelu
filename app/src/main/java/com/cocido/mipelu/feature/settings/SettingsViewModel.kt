@@ -37,6 +37,23 @@ class SettingsViewModel @Inject constructor(
     private val _deleteError = MutableStateFlow<String?>(null)
     val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
 
+    private val _verificationMessage = MutableStateFlow<String?>(null)
+    val verificationMessage: StateFlow<String?> = _verificationMessage.asStateFlow()
+
+    fun resendVerification() {
+        viewModelScope.launch {
+            authRepository.resendVerification()
+                .onSuccess { _verificationMessage.value = "Te reenviamos el mail de verificación." }
+                .onFailure {
+                    _verificationMessage.value = it.message ?: "No se pudo reenviar el mail. Probá de nuevo."
+                }
+        }
+    }
+
+    fun clearVerificationMessage() {
+        _verificationMessage.value = null
+    }
+
     fun updateProfile(name: String, professionalName: String, onSaved: () -> Unit) {
         val current = profile.value ?: return
         if (name.isBlank()) {

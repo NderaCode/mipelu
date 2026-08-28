@@ -59,6 +59,8 @@ class FakeAuthRepository @Inject constructor(
 
     override suspend fun forgotPassword(email: String): Result<Unit> = Result.success(Unit)
 
+    override suspend fun resendVerification(): Result<Unit> = Result.success(Unit)
+
     override suspend fun deleteAccount(): Result<Unit> {
         val userId = _currentUser.value?.id
         credentials.entries.removeAll { it.value.first == userId }

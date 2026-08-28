@@ -114,6 +114,15 @@ class RemoteAuthRepository @Inject constructor(
         }
     }
 
+    override suspend fun resendVerification(): Result<Unit> {
+        return try {
+            safeApiCall { api.resendVerification() }
+            Result.success(Unit)
+        } catch (e: MiPeluApiException) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun deleteAccount(): Result<Unit> {
         return try {
             safeApiCall { api.deleteAccount() }

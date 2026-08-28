@@ -55,6 +55,11 @@ interface MiPeluApi {
     @POST("auth/forgot-password")
     suspend fun forgotPassword(@Body body: ForgotPasswordRequest): Response<Unit>
 
+    // Authenticated (unlike the rest of this block): identifies the user via the Bearer token,
+    // no email in the request body.
+    @POST("auth/resend-verification")
+    suspend fun resendVerification(): Response<Unit>
+
     // --- Me / account ---
 
     @GET("me")
