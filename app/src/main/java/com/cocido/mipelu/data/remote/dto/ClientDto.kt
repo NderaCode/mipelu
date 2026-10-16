@@ -12,6 +12,17 @@ data class ClientListItemDto(
     val lastWorkType: String? = null,
     val lastWorkDate: String? = null,
     val tags: List<String> = emptyList(),
+    val importantNotes: String? = null,
+    val hairType: String? = null,
+    val baseColor: String? = null,
+    val porosity: String? = null,
+    val sensitivity: String? = null,
+    val allergies: String? = null,
+    val preferences: String? = null,
+    val productsThatWorked: String? = null,
+    val productsToAvoid: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
 )
 
 @Serializable

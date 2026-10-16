@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.outlined.EventNote
 import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.WorkOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +40,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.ErrorLogout
 import com.cocido.mipelu.core.theme.Mauve
 import com.cocido.mipelu.core.ui.components.BeforeAfterPhotos
+import com.cocido.mipelu.core.ui.components.EmptyState
+import com.cocido.mipelu.core.ui.components.FeedbackHost
+import com.cocido.mipelu.core.ui.components.LoadingPane
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.ServiceTypeBadgeRow
@@ -54,133 +58,157 @@ fun WorkDetailScreen(
     onDuplicate: (workId: String) -> Unit,
     viewModel: WorkDetailViewModel = hiltViewModel(),
 ) {
-    val work by viewModel.work.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
+    val work = uiState.work
     val context = LocalContext.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    androidx.compose.runtime.LaunchedEffect(deleteError) {
-        deleteError?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
-    }
+    FeedbackHost(message = deleteError, onConsumed = viewModel::consumeDeleteError) {
+        if (showDeleteConfirm && work != null) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                title = { Text("¿Eliminar este trabajo?") },
+                text = { Text("Se van a borrar también sus fotos antes/después. Esta acción no se puede deshacer.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDeleteConfirm = false
+                        viewModel.deleteWork(onBack)
+                    }) { Text("Eliminar", color = ErrorLogout) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancelar") }
+                },
+            )
+        }
 
-    if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("¿Eliminar este trabajo?") },
-            text = { Text("Se van a borrar también sus fotos antes/después. Esta acción no se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = false
-                    viewModel.deleteWork(onBack)
-                }) { Text("Eliminar", color = ErrorLogout) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancelar") }
-            },
-        )
-    }
-
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TopBarBack(title = work?.clientName.orEmpty(), onBack = onBack) {
-            IconButton(onClick = { showDeleteConfirm = true }) {
-                Icon(
-                    Icons.Filled.DeleteOutline,
-                    contentDescription = "Eliminar trabajo",
-                    tint = ErrorLogout,
+        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            TopBarBack(title = work?.clientName.orEmpty().ifBlank { "Trabajo" }, onBack = onBack) {
+                if (work != null) {
+                    IconButton(onClick = { showDeleteConfirm = true }) {
+                        Icon(
+                            Icons.Filled.DeleteOutline,
+                            contentDescription = "Eliminar trabajo",
+                            tint = ErrorLogout,
+                        )
+                    }
+                }
+            }
+            when {
+                uiState.isLoading -> LoadingPane(contentDescription = "Cargando trabajo")
+                uiState.notFound || work == null -> EmptyState(
+                    title = "No encontramos este trabajo",
+                    subtitle = "Puede que lo hayas eliminado o que el enlace ya no sea válido.",
+                    ctaLabel = "Volver",
+                    onCtaClick = onBack,
+                    icon = Icons.Outlined.WorkOff,
+                )
+                else -> WorkDetailContent(
+                    current = work,
+                    onEdit = { onEdit(work.id) },
+                    onDuplicate = { onDuplicate(work.id) },
+                    onShare = { shareWorkSummary(context, work) },
                 )
             }
         }
-        val current = work ?: return@Column
+    }
+}
 
-        // Solo se muestran las secciones/campos que la clienta realmente tiene cargados. Un
-        // "Corte" nunca completa fórmula/oxidante/tiempo (esos campos ni se le piden en Nuevo
-        // trabajo - ver ChemicalServiceTypes), así que la card de fórmula directamente no se
-        // arma en vez de mostrarse llena de guiones.
-        val isChemical = current.serviceTypes.any { it in ChemicalServiceTypes }
-        val diagnosticoRows = diagnosticoFields.filter { it.getter(current).isNotBlank() }
-        val formulaRows = if (isChemical) formulaFields.filter { it.getter(current).isNotBlank() } else emptyList()
-        val seguimientoFields = resultadoFields.filter { it.label !in setOf("Resultado final", "Precio") }
-        val seguimientoRows = seguimientoFields.filter { it.getter(current).isNotBlank() }
-        val hasHighlight = current.finalResult.isNotBlank() || current.price.isNotBlank()
+@Composable
+private fun WorkDetailContent(
+    current: WorkRecord,
+    onEdit: () -> Unit,
+    onDuplicate: () -> Unit,
+    onShare: () -> Unit,
+) {
+    // Solo se muestran las secciones/campos que la clienta realmente tiene cargados. Un
+    // "Corte" nunca completa fórmula/oxidante/tiempo (esos campos ni se le piden en Nuevo
+    // trabajo - ver ChemicalServiceTypes), así que la card de fórmula directamente no se
+    // arma en vez de mostrarse llena de guiones.
+    val isChemical = current.serviceTypes.any { it in ChemicalServiceTypes }
+    val diagnosticoRows = diagnosticoFields.filter { it.getter(current).isNotBlank() }
+    val formulaRows = if (isChemical) formulaFields.filter { it.getter(current).isNotBlank() } else emptyList()
+    val seguimientoFields = resultadoFields.filter { it.label !in setOf("Resultado final", "Precio") }
+    val seguimientoRows = seguimientoFields.filter { it.getter(current).isNotBlank() }
+    val hasHighlight = current.finalResult.isNotBlank() || current.price.isNotBlank()
 
-        LazyColumn(
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        current.date.toShortDateEs(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    ServiceTypeBadgeRow(types = current.serviceTypes)
-                }
-            }
-            item {
-                BeforeAfterPhotos(
-                    beforeUrl = current.beforePhotoUrls.firstOrNull(),
-                    afterUrl = current.afterPhotoUrls.firstOrNull(),
-                    onBeforeUrlPicked = {},
-                    onAfterUrlPicked = {},
-                    photoHeight = 160.dp,
+    LazyColumn(
+        contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    current.date.toShortDateEs(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                ServiceTypeBadgeRow(types = current.serviceTypes)
             }
-            if (hasHighlight) {
-                item { ResultHighlightCard(finalResult = current.finalResult, price = current.price) }
-            }
-            if (diagnosticoRows.isNotEmpty()) {
-                item {
-                    DetailCard(title = "Diagnóstico", icon = Icons.AutoMirrored.Outlined.FactCheck) {
-                        diagnosticoRows.forEach { InfoRow(it.label, it.getter(current)) }
-                    }
-                }
-            }
-            if (formulaRows.isNotEmpty()) {
-                item {
-                    DetailCard(title = "Fórmula y productos", icon = Icons.Outlined.Science) {
-                        formulaRows.forEach { InfoRow(it.label, it.getter(current)) }
-                    }
-                }
-            }
-            if (seguimientoRows.isNotEmpty()) {
-                item {
-                    DetailCard(title = "Seguimiento", icon = Icons.AutoMirrored.Outlined.EventNote) {
-                        seguimientoRows.forEach { InfoRow(it.label, it.getter(current)) }
-                    }
-                }
-            }
+        }
+        item {
+            BeforeAfterPhotos(
+                beforeUrl = current.beforePhotoUrls.firstOrNull(),
+                afterUrl = current.afterPhotoUrls.firstOrNull(),
+                onBeforeUrlPicked = {},
+                onAfterUrlPicked = {},
+                photoHeight = 160.dp,
+            )
+        }
+        if (hasHighlight) {
+            item { ResultHighlightCard(finalResult = current.finalResult, price = current.price) }
+        }
+        if (diagnosticoRows.isNotEmpty()) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MiPeluButton(
-                        text = "Editar",
-                        onClick = { onEdit(current.id) },
-                        modifier = Modifier.weight(1f),
-                        height = 48.dp,
-                        shape = MaterialTheme.shapes.small,
-                        style = MiPeluButtonStyle.Secondary,
-                    )
-                    MiPeluButton(
-                        text = "Duplicar",
-                        onClick = { onDuplicate(current.id) },
-                        modifier = Modifier.weight(1f),
-                        height = 48.dp,
-                        shape = MaterialTheme.shapes.small,
-                        style = MiPeluButtonStyle.Secondary,
-                    )
-                    MiPeluButton(
-                        text = "Compartir",
-                        onClick = { shareWorkSummary(context, current) },
-                        modifier = Modifier.weight(1f),
-                        height = 48.dp,
-                        shape = MaterialTheme.shapes.small,
-                        style = MiPeluButtonStyle.Secondary,
-                    )
+                DetailCard(title = "Diagnóstico", icon = Icons.AutoMirrored.Outlined.FactCheck) {
+                    diagnosticoRows.forEach { InfoRow(it.label, it.getter(current)) }
                 }
+            }
+        }
+        if (formulaRows.isNotEmpty()) {
+            item {
+                DetailCard(title = "Fórmula y productos", icon = Icons.Outlined.Science) {
+                    formulaRows.forEach { InfoRow(it.label, it.getter(current)) }
+                }
+            }
+        }
+        if (seguimientoRows.isNotEmpty()) {
+            item {
+                DetailCard(title = "Seguimiento", icon = Icons.AutoMirrored.Outlined.EventNote) {
+                    seguimientoRows.forEach { InfoRow(it.label, it.getter(current)) }
+                }
+            }
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MiPeluButton(
+                    text = "Editar",
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f),
+                    height = 48.dp,
+                    shape = MaterialTheme.shapes.small,
+                    style = MiPeluButtonStyle.Secondary,
+                )
+                MiPeluButton(
+                    text = "Duplicar",
+                    onClick = onDuplicate,
+                    modifier = Modifier.weight(1f),
+                    height = 48.dp,
+                    shape = MaterialTheme.shapes.small,
+                    style = MiPeluButtonStyle.Secondary,
+                )
+                MiPeluButton(
+                    text = "Compartir",
+                    onClick = onShare,
+                    modifier = Modifier.weight(1f),
+                    height = 48.dp,
+                    shape = MaterialTheme.shapes.small,
+                    style = MiPeluButtonStyle.Secondary,
+                )
             }
         }
     }

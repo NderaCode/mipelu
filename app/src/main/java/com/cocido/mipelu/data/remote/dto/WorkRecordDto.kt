@@ -25,6 +25,22 @@ data class WorkRecordListItemDto(
     val beforeThumbnailUrl: String? = null,
     val afterThumbnailUrl: String? = null,
     val isDraft: Boolean,
+    val hairCondition: String? = null,
+    val baseColor: String? = null,
+    val objective: String? = null,
+    val diagnosisNotes: String? = null,
+    val formula: String? = null,
+    val products: String? = null,
+    val oxidantVolume: String? = null,
+    val exposureTime: String? = null,
+    val technique: String? = null,
+    val result: String? = null,
+    val price: Double? = null,
+    val recommendations: String? = null,
+    val nextFollowUpNote: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val photos: List<PhotoDto> = emptyList(),
 )
 
 @Serializable

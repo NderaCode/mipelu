@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 data class ClientProfileUiState(
     val client: Client? = null,
     val works: List<WorkRecord> = emptyList(),
+    val isLoading: Boolean = true,
+    val notFound: Boolean = false,
 ) {
     val lastHairCondition: String
         get() = works.firstOrNull()?.hairCondition?.ifBlank { null } ?: "Sin registros todavía"
@@ -37,11 +39,24 @@ class ClientProfileViewModel @Inject constructor(
     val uiState: StateFlow<ClientProfileUiState> = combine(
         clientRepository.observeClient(clientId),
         workRecordRepository.observeWorksForClient(clientId),
-    ) { client, works -> ClientProfileUiState(client, works) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ClientProfileUiState())
+        clientRepository.isLoading,
+        workRecordRepository.isLoading,
+    ) { client, works, clientsLoading, worksLoading ->
+        val stillLoading = client == null && (clientsLoading || worksLoading)
+        ClientProfileUiState(
+            client = client,
+            works = works,
+            isLoading = stillLoading,
+            notFound = client == null && !stillLoading,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ClientProfileUiState())
 
     private val _deleteError = MutableStateFlow<String?>(null)
     val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
+    fun consumeDeleteError() {
+        _deleteError.value = null
+    }
 
     fun deleteClient(onDeleted: () -> Unit) {
         _deleteError.value = null

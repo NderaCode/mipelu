@@ -25,9 +25,9 @@ import com.cocido.mipelu.core.theme.TextoMuted
 fun EmptyState(
     title: String,
     subtitle: String,
-    ctaLabel: String,
-    onCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
+    ctaLabel: String? = null,
+    onCtaClick: (() -> Unit)? = null,
     icon: ImageVector = Icons.Outlined.Info,
     ctaTestTag: String? = null,
 ) {
@@ -54,11 +54,13 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(20.dp))
-        MiPeluPillButton(
-            text = ctaLabel,
-            onClick = onCtaClick,
-            modifier = if (ctaTestTag != null) Modifier.testTag(ctaTestTag) else Modifier,
-        )
+        if (ctaLabel != null && onCtaClick != null) {
+            Spacer(Modifier.height(20.dp))
+            MiPeluPillButton(
+                text = ctaLabel,
+                onClick = onCtaClick,
+                modifier = if (ctaTestTag != null) Modifier.testTag(ctaTestTag) else Modifier,
+            )
+        }
     }
 }

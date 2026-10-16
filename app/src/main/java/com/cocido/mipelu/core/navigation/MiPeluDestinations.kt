@@ -23,6 +23,9 @@ sealed interface MiPeluDestination {
     data object Home : MiPeluDestination
 
     @Serializable
+    data object Agenda : MiPeluDestination
+
+    @Serializable
     data object ClientList : MiPeluDestination
 
     @Serializable
@@ -49,11 +52,15 @@ sealed interface MiPeluDestination {
 
     @Serializable
     data object Settings : MiPeluDestination
+
+    @Serializable
+    data object BookingSettings : MiPeluDestination
 }
 
 /** Rutas de nivel superior: muestran bottom nav + FAB, según el diseño (showBottomNav/showFab). */
 val topLevelDestinations = setOf(
     MiPeluDestination.Home,
+    MiPeluDestination.Agenda,
     MiPeluDestination.ClientList,
     MiPeluDestination.WorkList,
     MiPeluDestination.Settings,

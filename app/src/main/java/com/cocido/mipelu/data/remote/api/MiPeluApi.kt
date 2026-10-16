@@ -1,6 +1,8 @@
 package com.cocido.mipelu.data.remote.api
 
+import com.cocido.mipelu.data.remote.dto.AppointmentDto
 import com.cocido.mipelu.data.remote.dto.AuthResponse
+import com.cocido.mipelu.data.remote.dto.BookingSettingsDto
 import com.cocido.mipelu.data.remote.dto.ClientDetailDto
 import com.cocido.mipelu.data.remote.dto.ClientListResponse
 import com.cocido.mipelu.data.remote.dto.ClientUpsertRequest
@@ -12,6 +14,7 @@ import com.cocido.mipelu.data.remote.dto.PhotoDto
 import com.cocido.mipelu.data.remote.dto.RefreshTokenRequest
 import com.cocido.mipelu.data.remote.dto.SignupRequest
 import com.cocido.mipelu.data.remote.dto.StorageUsageDto
+import com.cocido.mipelu.data.remote.dto.UpdateBookingSettingsRequest
 import com.cocido.mipelu.data.remote.dto.UpdateProfileRequest
 import com.cocido.mipelu.data.remote.dto.UpdateWorkRecordRequest
 import com.cocido.mipelu.data.remote.dto.UserProfileDto
@@ -142,4 +145,21 @@ interface MiPeluApi {
 
     @GET("dashboard")
     suspend fun getDashboard(): DashboardResponse
+
+    // --- Booking / turnero ---
+
+    @GET("me/booking")
+    suspend fun getBookingSettings(): BookingSettingsDto
+
+    @PATCH("me/booking")
+    suspend fun updateBookingSettings(@Body body: UpdateBookingSettingsRequest): BookingSettingsDto
+
+    @GET("appointments")
+    suspend fun listAppointments(
+        @Query("from") from: String,
+        @Query("to") to: String,
+    ): List<AppointmentDto>
+
+    @POST("appointments/{id}/cancel")
+    suspend fun cancelAppointment(@Path("id") id: String): Response<Unit>
 }

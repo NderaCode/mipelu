@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Work
@@ -38,6 +39,7 @@ private data class BottomNavTab(
 
 private val bottomNavTabs = listOf(
     BottomNavTab(MiPeluDestination.Home, "Inicio", Icons.Filled.Home, TestTags.BOTTOM_NAV_HOME),
+    BottomNavTab(MiPeluDestination.Agenda, "Agenda", Icons.Filled.DateRange, TestTags.BOTTOM_NAV_AGENDA),
     BottomNavTab(MiPeluDestination.ClientList, "Clientas", Icons.Filled.People, TestTags.BOTTOM_NAV_CLIENTS),
     BottomNavTab(MiPeluDestination.WorkList, "Trabajos", Icons.Filled.Work, TestTags.BOTTOM_NAV_WORKS),
     BottomNavTab(MiPeluDestination.Settings, "Perfil", icon = null, testTag = TestTags.BOTTOM_NAV_PROFILE),

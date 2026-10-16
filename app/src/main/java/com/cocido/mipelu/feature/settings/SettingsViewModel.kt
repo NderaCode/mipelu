@@ -85,5 +85,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun consumeDeleteError() {
+        _deleteError.value = null
+    }
+
     fun logout() = authRepository.logout()
 }

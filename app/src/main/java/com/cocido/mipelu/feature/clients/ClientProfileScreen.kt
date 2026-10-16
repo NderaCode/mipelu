@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.outlined.PersonOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,14 +40,17 @@ import com.cocido.mipelu.core.theme.NudeClaro
 import com.cocido.mipelu.core.theme.NudeTexto
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.BadgeTag
+import com.cocido.mipelu.core.ui.components.EmptyState
+import com.cocido.mipelu.core.ui.components.FeedbackHost
+import com.cocido.mipelu.core.ui.components.LoadingPane
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.SectionLabel
 import com.cocido.mipelu.core.ui.components.ServiceTypeBadgeRow
 import com.cocido.mipelu.core.ui.components.TopBarBack
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
-import androidx.compose.ui.semantics.semantics
 import com.cocido.mipelu.core.util.toShortDateEs
+import com.cocido.mipelu.domain.model.Client
 import com.cocido.mipelu.domain.model.WorkRecord
 
 @Composable
@@ -60,125 +65,155 @@ fun ClientProfileScreen(
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
     val client = uiState.client
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    val context = androidx.compose.ui.platform.LocalContext.current
 
-    androidx.compose.runtime.LaunchedEffect(deleteError) {
-        deleteError?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
-    }
+    FeedbackHost(message = deleteError, onConsumed = viewModel::consumeDeleteError) {
+        if (showDeleteConfirm && client != null) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                title = { Text("¿Eliminar a ${client.name}?") },
+                text = { Text("Se van a borrar también todos sus trabajos y fotos registrados. Esta acción no se puede deshacer.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDeleteConfirm = false
+                        viewModel.deleteClient(onBack)
+                    }) { Text("Eliminar", color = ErrorLogout) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancelar") }
+                },
+            )
+        }
 
-    if (showDeleteConfirm && client != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("¿Eliminar a ${client.name}?") },
-            text = { Text("Se van a borrar también todos sus trabajos y fotos registrados. Esta acción no se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = false
-                    viewModel.deleteClient(onBack)
-                }) { Text("Eliminar", color = ErrorLogout) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancelar") }
-            },
-        )
-    }
-
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TopBarBack(title = "Perfil de clienta", onBack = onBack) {
-            IconButton(onClick = { showDeleteConfirm = true }) {
-                Icon(
-                    Icons.Filled.DeleteOutline,
-                    contentDescription = "Eliminar clienta",
-                    tint = ErrorLogout,
+        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            TopBarBack(title = "Perfil de clienta", onBack = onBack) {
+                if (client != null) {
+                    IconButton(onClick = { showDeleteConfirm = true }) {
+                        Icon(
+                            Icons.Filled.DeleteOutline,
+                            contentDescription = "Eliminar clienta",
+                            tint = ErrorLogout,
+                        )
+                    }
+                }
+            }
+            when {
+                uiState.isLoading -> LoadingPane(contentDescription = "Cargando perfil de clienta")
+                uiState.notFound || client == null -> EmptyState(
+                    title = "No encontramos a esta clienta",
+                    subtitle = "Puede que la hayas eliminado o que el enlace ya no sea válido.",
+                    ctaLabel = "Volver",
+                    onCtaClick = onBack,
+                    icon = Icons.Outlined.PersonOff,
+                )
+                else -> ClientProfileContent(
+                    client = client,
+                    lastHairCondition = uiState.lastHairCondition,
+                    works = uiState.works,
+                    onNuevoTrabajo = { onNuevoTrabajo(client.id) },
+                    onEditarFicha = { onEditarFicha(client.id) },
+                    onWorkClick = onWorkClick,
                 )
             }
         }
-        if (client == null) return@Column
+    }
+}
 
-        LazyColumn(
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
+@Composable
+private fun ClientProfileContent(
+    client: Client,
+    lastHairCondition: String,
+    works: List<WorkRecord>,
+    onNuevoTrabajo: () -> Unit,
+    onEditarFicha: () -> Unit,
+    onWorkClick: (String) -> Unit,
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                AvatarInitials(
+                    initials = client.initials,
+                    size = 48.dp,
+                    contentDescription = "Avatar de ${client.name}",
+                )
+                Column {
+                    Text(client.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+                    Text(client.phone, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        val tags = client.tagLabels()
+        if (tags.isNotEmpty()) {
             item {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    AvatarInitials(initials = client.initials, size = 48.dp)
-                    Column {
-                        Text(client.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
-                        Text(client.phone, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    tags.forEach { BadgeTag(label = it) }
                 }
             }
-            val tags = client.tagLabels()
-            if (tags.isNotEmpty()) {
-                item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        tags.forEach { BadgeTag(label = it) }
-                    }
-                }
-            }
-            if (client.importantNotes.isNotBlank()) {
-                item {
-                    Text(
-                        text = client.importantNotes,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = NudeTexto,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(NudeClaro, MaterialTheme.shapes.medium)
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                    )
-                }
-            }
+        }
+        if (client.importantNotes.isNotBlank()) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MiPeluButton(
-                        text = "Nuevo trabajo",
-                        onClick = { onNuevoTrabajo(client.id) },
-                        modifier = Modifier.weight(1f),
-                        height = 48.dp,
-                        shape = MaterialTheme.shapes.small,
-                    )
-                    MiPeluButton(
-                        text = "Editar ficha",
-                        onClick = { onEditarFicha(client.id) },
-                        modifier = Modifier.weight(1f),
-                        height = 48.dp,
-                        shape = MaterialTheme.shapes.small,
-                        style = MiPeluButtonStyle.Secondary,
-                    )
-                }
+                Text(
+                    text = client.importantNotes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NudeTexto,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(NudeClaro, MaterialTheme.shapes.medium)
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                )
             }
-            item {
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    modifier = Modifier.fillMaxWidth().miPeluCardShadow(shape = MaterialTheme.shapes.medium),
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                            InfoField("Tipo de cabello", client.hairType, Modifier.weight(1f))
-                            InfoField("Color base", client.baseColor, Modifier.weight(1f))
-                        }
-                        InfoField("Estado actual", uiState.lastHairCondition, Modifier.fillMaxWidth())
-                        InfoField("Preferencias", client.preferences, Modifier.fillMaxWidth())
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MiPeluButton(
+                    text = "Nuevo trabajo",
+                    onClick = onNuevoTrabajo,
+                    modifier = Modifier.weight(1f),
+                    height = 48.dp,
+                    shape = MaterialTheme.shapes.small,
+                )
+                MiPeluButton(
+                    text = "Editar ficha",
+                    onClick = onEditarFicha,
+                    modifier = Modifier.weight(1f),
+                    height = 48.dp,
+                    shape = MaterialTheme.shapes.small,
+                    style = MiPeluButtonStyle.Secondary,
+                )
+            }
+        }
+        item {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                modifier = Modifier.fillMaxWidth().miPeluCardShadow(shape = MaterialTheme.shapes.medium),
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        InfoField("Tipo de cabello", client.hairType, Modifier.weight(1f))
+                        InfoField("Color base", client.baseColor, Modifier.weight(1f))
                     }
+                    InfoField("Estado actual", lastHairCondition, Modifier.fillMaxWidth())
+                    InfoField("Preferencias", client.preferences, Modifier.fillMaxWidth())
                 }
             }
-            item { SectionLabel("Historial") }
-            if (uiState.works.isEmpty()) {
-                item {
-                    Text(
-                        "Todavía no hay trabajos registrados para esta clienta.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    )
-                }
-            } else {
-                items(uiState.works, key = { it.id }) { work ->
-                    ClientTimelineItem(work = work, onClick = { onWorkClick(work.id) })
-                }
+        }
+        item { SectionLabel("Historial") }
+        if (works.isEmpty()) {
+            item {
+                Text(
+                    "Todavía no hay trabajos registrados para esta clienta.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                )
+            }
+        } else {
+            items(works, key = { it.id }) { work ->
+                ClientTimelineItem(work = work, onClick = { onWorkClick(work.id) })
             }
         }
     }

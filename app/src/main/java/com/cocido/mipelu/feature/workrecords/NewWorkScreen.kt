@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -28,10 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,11 +41,12 @@ import com.cocido.mipelu.core.theme.FondoBorrador
 import com.cocido.mipelu.core.theme.miPeluColors
 import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.BeforeAfterPhotos
+import com.cocido.mipelu.core.ui.components.FormErrorText
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.MiPeluChip
-import com.cocido.mipelu.core.ui.components.MiPeluTextField
 import com.cocido.mipelu.core.ui.components.SectionLabel
+import com.cocido.mipelu.core.ui.components.SuggestedFormField
 import com.cocido.mipelu.core.ui.components.TopBarBack
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
 import com.cocido.mipelu.core.util.toShortDateEs
@@ -65,7 +68,7 @@ fun NewWorkScreen(
     val afterPhotoUploadState by viewModel.afterPhotoUploadState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     var clientMenuExpanded by remember { mutableStateOf(false) }
-    var clientQuery by remember { mutableStateOf("") }
+    var clientQuery by rememberSaveable { mutableStateOf("") }
     val filteredClients = remember(clients, clientQuery) {
         if (clientQuery.isBlank()) clients else clients.filter { it.name.contains(clientQuery, ignoreCase = true) }
     }
@@ -196,13 +199,7 @@ fun NewWorkScreen(
 
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    errorMessage?.let {
-                        Text(
-                            it,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
+                    errorMessage?.let { FormErrorText(it) }
                     MiPeluButton(
                         text = if (isSaving) "Guardando..." else "Guardar trabajo",
                         onClick = { viewModel.save(asDraft = false, onSaved = onSaved) },
@@ -233,11 +230,17 @@ private fun ReadOnlyField(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .miPeluCardShadow(shape = MaterialTheme.shapes.small, elevation = 2.dp)
             .background(background, MaterialTheme.shapes.small)
             .border(BorderStroke(1.dp, MaterialTheme.miPeluColors.bordeCampo), MaterialTheme.shapes.small)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick, role = Role.Button)
+                } else {
+                    Modifier
+                },
+            )
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -259,13 +262,14 @@ private fun WorkFieldSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionLabel(title)
         fields.forEach { field ->
-            MiPeluTextField(
+            SuggestedFormField(
                 value = field.getter(draft),
                 onValueChange = { onFieldChange(field, it) },
                 label = field.label,
                 placeholder = field.placeholder,
                 multiline = field.multiline,
                 keyboardType = field.keyboardType,
+                suggestions = field.suggestions,
             )
         }
     }

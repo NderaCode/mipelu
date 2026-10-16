@@ -1,16 +1,19 @@
 package com.cocido.mipelu.data.remote.mapper
 
+import com.cocido.mipelu.data.local.db.CachedPhoto
 import com.cocido.mipelu.data.remote.dto.CreateWorkRecordRequest
+import com.cocido.mipelu.data.remote.dto.PhotoDto
 import com.cocido.mipelu.data.remote.dto.UpdateWorkRecordRequest
 import com.cocido.mipelu.data.remote.dto.WorkRecordDetailDto
+import com.cocido.mipelu.data.remote.dto.WorkRecordListItemDto
 import com.cocido.mipelu.domain.model.WorkRecord
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 fun WorkRecordDetailDto.toDomain(ownerUserId: String): WorkRecord {
-    val beforeUrls = photos.filter { it.type == "before" }.map { it.url }
-    val afterUrls = photos.filter { it.type == "after" }.map { it.url }
+    val beforeUrls = photos.filter { it.type == "before" }.map { it.thumbnailUrl ?: it.url }
+    val afterUrls = photos.filter { it.type == "after" }.map { it.thumbnailUrl ?: it.url }
     return WorkRecord(
         id = id,
         ownerUserId = ownerUserId,
@@ -40,6 +43,38 @@ fun WorkRecordDetailDto.toDomain(ownerUserId: String): WorkRecord {
         updatedAt = updatedAt.isoDateTimeToMillis(),
     )
 }
+
+fun WorkRecordListItemDto.toDetailDto(): WorkRecordDetailDto = WorkRecordDetailDto(
+    id = id,
+    clientId = clientId,
+    clientName = clientName,
+    serviceTypes = serviceTypes,
+    date = date,
+    hairCondition = hairCondition,
+    baseColor = baseColor,
+    objective = objective,
+    diagnosisNotes = diagnosisNotes,
+    formula = formula,
+    products = products,
+    oxidantVolume = oxidantVolume,
+    exposureTime = exposureTime,
+    technique = technique,
+    result = result,
+    price = price,
+    recommendations = recommendations,
+    nextFollowUpNote = nextFollowUpNote,
+    isDraft = isDraft,
+    createdAt = createdAt ?: "${date}T00:00:00.000Z",
+    updatedAt = updatedAt ?: "${date}T00:00:00.000Z",
+    photos = photos,
+)
+
+fun PhotoDto.toCached(): CachedPhoto = CachedPhoto(
+    id = id,
+    type = type,
+    url = url,
+    thumbnailUrl = thumbnailUrl,
+)
 
 fun WorkRecord.toCreateRequest(): CreateWorkRecordRequest = CreateWorkRecordRequest(
     clientId = clientId,

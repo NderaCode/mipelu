@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,11 +20,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -33,11 +35,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.FondoApp
 import com.cocido.mipelu.core.theme.Superficie
 import com.cocido.mipelu.core.ui.TestTags
+import com.cocido.mipelu.core.ui.components.FormErrorText
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluButtonStyle
 import com.cocido.mipelu.core.ui.components.MiPeluTextField
 import com.cocido.mipelu.core.ui.components.TopBarBack
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
+import com.cocido.mipelu.core.util.looksLikeEmail
 
 private val AuthCardShape = RoundedCornerShape(24.dp)
 
@@ -49,8 +53,8 @@ fun LoginScreen(
     onForgotPassword: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
@@ -116,16 +120,16 @@ fun LoginScreen(
                         "Olvidé mi contraseña",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(onClick = onForgotPassword),
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = 48.dp)
+                            .clickable(onClick = onForgotPassword, role = Role.Button),
                     )
                     errorMessage?.let {
                         Spacer(Modifier.height(14.dp))
-                        Text(
-                            it,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
+                        FormErrorText(
+                            message = it,
+                            testTag = TestTags.LOGIN_ERROR_MESSAGE,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().testTag(TestTags.LOGIN_ERROR_MESSAGE),
                         )
                     }
                     Spacer(Modifier.height(28.dp))
@@ -133,7 +137,7 @@ fun LoginScreen(
                         text = if (isLoading) "Ingresando..." else "Iniciar sesión",
                         onClick = { viewModel.login(email, password, onLoginSuccess) },
                         modifier = Modifier.fillMaxWidth().testTag(TestTags.LOGIN_SUBMIT_BUTTON),
-                        enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
+                        enabled = !isLoading && email.looksLikeEmail() && password.isNotBlank(),
                     )
                     Spacer(Modifier.height(6.dp))
                     MiPeluButton(

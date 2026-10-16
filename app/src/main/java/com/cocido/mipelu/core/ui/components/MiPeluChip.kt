@@ -1,6 +1,7 @@
 package com.cocido.mipelu.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
@@ -36,7 +37,10 @@ fun MiPeluChip(
         Modifier.selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
     }
     androidx.compose.material3.Surface(
-        modifier = modifier.then(shadowModifier).then(selectionModifier),
+        modifier = modifier
+            .defaultMinSize(minHeight = 48.dp)
+            .then(shadowModifier)
+            .then(selectionModifier),
         shape = PillShape,
         color = containerColor,
         border = if (selected) null else BorderStroke(1.dp, MaterialTheme.miPeluColors.bordeSuave),

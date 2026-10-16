@@ -23,6 +23,17 @@ val keystoreProperties =
         }
     }
 
+// Per-machine override for the debug API URL (e.g. to point at a local backend instead of
+// production while testing). Lives in local.properties, which is gitignored - never committed.
+val localProperties =
+    Properties().apply {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { load(it) }
+        }
+    }
+val debugApiBaseUrl = localProperties.getProperty("debugApiBaseUrl") ?: "https://api.shacode.com.ar/"
+
 android {
     namespace = "com.cocido.mipelu"
     compileSdk {
@@ -52,12 +63,19 @@ android {
 
     buildTypes {
         debug {
-            // Points at the same production API as release so debug builds never need a local
-            // backend running. Trailing slash mandatory - see the comment on the release block.
-            buildConfigField("String", "API_BASE_URL", "\"https://api.shacode.com.ar/\"")
+            // Defaults to production so debug builds never need a local backend running.
+            // Override per-machine by adding `debugApiBaseUrl=http://10.0.2.2:3000/` (emulator)
+            // to local.properties (gitignored) to point at a local backend instead.
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
         }
         release {
-            isMinifyEnabled = false
+            // Shrinking removes the unused ~half of the dependency graph and obfuscation raises
+            // the bar on reverse-engineering the API surface. isShrinkResources needs isMinifyEnabled,
+            // hence both together. See proguard-rules.pro for the kotlinx.serialization keeps this
+            // requires - without them R8 strips the generated serializers and the release build
+            // fails at runtime on the first API response.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -127,6 +145,9 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)

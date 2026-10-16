@@ -45,14 +45,17 @@ fun MiPeluTextField(
     // ImeAction.Done + onDone para disparar el submit en vez de solo bajar el foco.
     imeAction: ImeAction = if (multiline) ImeAction.Default else ImeAction.Next,
     onDone: (() -> Unit)? = null,
+    supportingText: String? = null,
+    isError: Boolean = false,
 ) {
     val focusManager = LocalFocusManager.current
     var passwordVisible by remember { mutableStateOf(false) }
-    val effectiveTransformation = when {
-        isPassword && !passwordVisible -> PasswordVisualTransformation()
-        isPassword -> VisualTransformation.None
-        else -> visualTransformation
-    }
+    val effectiveTransformation =
+        when {
+            isPassword && !passwordVisible -> PasswordVisualTransformation()
+            isPassword -> VisualTransformation.None
+            else -> visualTransformation
+        }
 
     // El label vive en el slot nativo de OutlinedTextField (no como Text suelto arriba) para que
     // TalkBack lo anuncie al enfocar el campo (WCAG 1.3.1 / 4.1.2).
@@ -61,41 +64,58 @@ fun MiPeluTextField(
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
         label = { Text(label) },
-        placeholder = if (placeholder.isNotBlank()) {
-            { Text(placeholder, color = MaterialTheme.miPeluColors.textoMuted) }
-        } else null,
+        placeholder =
+            if (placeholder.isNotBlank()) {
+                { Text(placeholder, color = MaterialTheme.miPeluColors.textoMuted) }
+            } else {
+                null
+            },
         readOnly = readOnly,
         singleLine = !multiline,
         minLines = if (multiline) 3 else 1,
         maxLines = if (multiline) 5 else 1,
+        isError = isError,
+        supportingText = supportingText?.let { { Text(it) } },
         shape = MaterialTheme.shapes.small,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = if (isPassword) KeyboardType.Password else keyboardType,
-            imeAction = imeAction,
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { focusManager.moveFocus(FocusDirection.Down) },
-            onDone = { onDone?.invoke() ?: focusManager.clearFocus() },
-        ),
+        keyboardOptions =
+            KeyboardOptions(
+                keyboardType = if (isPassword) KeyboardType.Password else keyboardType,
+                imeAction = imeAction,
+            ),
+        keyboardActions =
+            KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                onDone = { onDone?.invoke() ?: focusManager.clearFocus() },
+            ),
         visualTransformation = effectiveTransformation,
-        trailingIcon = if (isPassword) {
-            {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        } else null,
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = containerColor,
-            focusedContainerColor = containerColor,
-            unfocusedBorderColor = MaterialTheme.miPeluColors.bordeCampo,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-        ),
+        trailingIcon =
+            if (isPassword) {
+                { PasswordVisibilityToggle(passwordVisible) { passwordVisible = !passwordVisible } }
+            } else {
+                null
+            },
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = containerColor,
+                focusedContainerColor = containerColor,
+                unfocusedBorderColor = MaterialTheme.miPeluColors.bordeCampo,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+            ),
     )
+}
+
+@Composable
+private fun PasswordVisibilityToggle(
+    passwordVisible: Boolean,
+    onToggle: () -> Unit,
+) {
+    IconButton(onClick = onToggle) {
+        Icon(
+            imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }

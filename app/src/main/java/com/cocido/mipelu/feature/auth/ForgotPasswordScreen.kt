@@ -24,7 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +39,12 @@ import com.cocido.mipelu.core.theme.CiruelaMedio
 import com.cocido.mipelu.core.theme.FondoApp
 import com.cocido.mipelu.core.theme.NudeClaro
 import com.cocido.mipelu.core.theme.Superficie
+import com.cocido.mipelu.core.ui.components.FormErrorText
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluTextField
 import com.cocido.mipelu.core.ui.components.TopBarBack
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
+import com.cocido.mipelu.core.util.looksLikeEmail
 
 private val AuthCardShape = RoundedCornerShape(24.dp)
 
@@ -51,7 +53,7 @@ fun ForgotPasswordScreen(
     onBack: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
-    var email by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
     val isLoading by viewModel.forgotPasswordLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.forgotPasswordError.collectAsStateWithLifecycle()
     val sent by viewModel.forgotPasswordSent.collectAsStateWithLifecycle()
@@ -124,24 +126,18 @@ fun ForgotPasswordScreen(
                             keyboardType = KeyboardType.Email,
                             containerColor = FondoApp,
                             imeAction = ImeAction.Done,
-                            onDone = { if (!isLoading && email.isNotBlank()) viewModel.forgotPassword(email) },
+                            onDone = { if (!isLoading && email.looksLikeEmail()) viewModel.forgotPassword(email) },
                         )
                         errorMessage?.let {
                             Spacer(Modifier.height(14.dp))
-                            Text(
-                                it,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                            FormErrorText(message = it, textAlign = TextAlign.Center)
                         }
                         Spacer(Modifier.height(28.dp))
                         MiPeluButton(
                             text = if (isLoading) "Enviando..." else "Enviar instrucciones",
                             onClick = { viewModel.forgotPassword(email) },
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = !isLoading && email.isNotBlank(),
+                            enabled = !isLoading && email.looksLikeEmail(),
                         )
                     }
                 }

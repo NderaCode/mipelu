@@ -1,5 +1,6 @@
 package com.cocido.mipelu.data.remote
 
+import com.cocido.mipelu.data.local.ClientLocalStore
 import com.cocido.mipelu.data.remote.api.MiPeluApi
 import com.cocido.mipelu.data.remote.dto.ClientListItemDto
 import com.cocido.mipelu.data.remote.mapper.toDomain
@@ -8,36 +9,30 @@ import com.cocido.mipelu.domain.model.Client
 import com.cocido.mipelu.domain.repository.ClientRepository
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-// The backend caps `limit` at 100 (see PaginationQueryDto) and 400s above that, so fetch() pages
-// through in chunks of this size until `total` is covered.
 private const val CLIENTS_PAGE_LIMIT = 100
 
 /**
- * GET /clients only returns the card-summary fields (name, phone, tags, ...), but the app's
- * allergy/sensitivity filters on ClientListScreen need the full technical sheet. So refresh()
- * fetches the id list first, then hydrates every client's full detail (GET /clients/:id) in
- * parallel - N+1 requests, acceptable at an independent professional's scale (tens of clients,
- * not thousands). If that ever becomes a bottleneck, extend the backend's list DTO instead.
+ * Room is the source of truth: observers always read from [local], and network results are
+ * written there. That is what makes the client list survive process death and work offline.
+ *
+ * The list endpoint now returns the ficha fields the Android filters need, so refresh() is one
+ * paginated pass instead of 1 + N GETs per client.
  */
 @Singleton
 class RemoteClientRepository @Inject constructor(
     private val api: MiPeluApi,
+    private val local: ClientLocalStore,
 ) : ClientRepository {
 
-    private val clients = MutableStateFlow<List<Client>>(emptyList())
     private val refreshMutex = Mutex()
     private var hasLoadedOnce = false
 
@@ -48,12 +43,10 @@ class RemoteClientRepository @Inject constructor(
     override val error: StateFlow<String?> = _error.asStateFlow()
 
     override fun observeClients(ownerUserId: String): Flow<List<Client>> =
-        clients
-            .onStart { if (!hasLoadedOnce) fetch(ownerUserId) }
-            .map { list -> list.sortedBy { it.name } }
+        local.observeClients(ownerUserId).onStart { fetch(ownerUserId) }
 
     override fun observeClient(clientId: String): Flow<Client?> =
-        clients.map { list -> list.find { it.id == clientId } }
+        local.observeClient(clientId)
 
     override suspend fun upsertClient(client: Client): Client {
         val dto = if (client.id.isBlank()) {
@@ -62,44 +55,38 @@ class RemoteClientRepository @Inject constructor(
             safeApiCall { api.updateClient(client.id, client.toUpsertRequest()) }
         }
         val saved = dto.toDomain(client.ownerUserId)
-        clients.update { list ->
-            if (list.any { it.id == saved.id }) list.map { if (it.id == saved.id) saved else it }
-            else list + saved
-        }
+        local.upsert(saved)
         return saved
     }
 
     override suspend fun deleteClient(clientId: String) {
         safeApiCall { api.deleteClient(clientId) }
-        clients.update { list -> list.filterNot { it.id == clientId } }
+        local.delete(clientId)
     }
 
     override suspend fun refresh(ownerUserId: String) = fetch(ownerUserId, force = true)
 
     override fun clearCache() {
         hasLoadedOnce = false
-        clients.value = emptyList()
+        // logout() is a user-initiated barrier: the next login must not race this delete and
+        // lose the new account's first write. A DELETE of tens of rows is milliseconds.
+        runBlocking { local.clear() }
     }
 
-    // No catch here would let a network failure kill this cold flow's onStart{} permanently -
-    // every downstream collector (ViewModel combine/stateIn) would crash instead of seeing an
-    // error state. hasLoadedOnce stays false on failure so the next subscribe/refresh retries.
     private suspend fun fetch(ownerUserId: String, force: Boolean = false) = refreshMutex.withLock {
         if (hasLoadedOnce && !force) return@withLock
-        _isLoading.value = true
+        val hadData = local.hasAny(ownerUserId)
+        if (!hadData) _isLoading.value = true
         try {
-            val summaries = mutableListOf<ClientListItemDto>()
+            val items = mutableListOf<ClientListItemDto>()
             var page = 1
             while (true) {
                 val response = safeApiCall { api.listClients(page = page, limit = CLIENTS_PAGE_LIMIT) }
-                summaries += response.items
-                if (response.items.isEmpty() || summaries.size >= response.total) break
+                items += response.items
+                if (response.items.isEmpty() || items.size >= response.total) break
                 page++
             }
-            val details = coroutineScope {
-                summaries.map { item -> async { safeApiCall { api.getClient(item.id) } } }.awaitAll()
-            }
-            clients.value = details.map { it.toDomain(ownerUserId) }
+            local.replaceAll(ownerUserId, items.map { it.toDomain(ownerUserId) })
             hasLoadedOnce = true
             _error.value = null
         } catch (e: MiPeluApiException) {

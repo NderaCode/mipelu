@@ -8,11 +8,16 @@ import com.cocido.mipelu.domain.repository.ClientRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+private const val STOP_TIMEOUT_MS = 5_000L
 
 @HiltViewModel
 class ClientFichaViewModel @Inject constructor(
@@ -31,9 +36,22 @@ class ClientFichaViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _hasObserved = MutableStateFlow(false)
+
+    val isLoading: StateFlow<Boolean> = combine(_hasObserved, _draft) { seen, current ->
+        !seen && current == null
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), true)
+
+    val notFound: StateFlow<Boolean> = combine(_hasObserved, _draft) { seen, current ->
+        seen && current == null
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+
     init {
         clientRepository.observeClient(clientId)
-            .onEach { if (_draft.value == null) _draft.value = it }
+            .onEach {
+                if (_draft.value == null) _draft.value = it
+                _hasObserved.value = true
+            }
             .launchIn(viewModelScope)
     }
 

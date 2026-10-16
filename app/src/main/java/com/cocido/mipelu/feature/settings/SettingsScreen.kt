@@ -1,6 +1,5 @@
 package com.cocido.mipelu.feature.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,14 +27,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -46,6 +45,7 @@ import com.cocido.mipelu.core.theme.NudeClaro
 import com.cocido.mipelu.core.theme.NudeTexto
 import com.cocido.mipelu.core.theme.Superficie
 import com.cocido.mipelu.core.ui.components.AvatarInitials
+import com.cocido.mipelu.core.ui.components.FeedbackHost
 import com.cocido.mipelu.core.ui.components.MiPeluButton
 import com.cocido.mipelu.core.ui.components.MiPeluTextField
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
@@ -67,22 +67,22 @@ fun SettingsScreen(
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
     val verificationMessage by viewModel.verificationMessage.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val comingSoon = { Toast.makeText(context, "Disponible próximamente", Toast.LENGTH_SHORT).show() }
+    var snackbarMessage by remember { mutableStateOf<String?>(null) }
+    val comingSoon = { snackbarMessage = "Disponible próximamente" }
     var showEditProfile by remember { mutableStateOf(false) }
     var showDeleteAccountConfirm by remember { mutableStateOf(false) }
+    val feedback = deleteError ?: verificationMessage ?: snackbarMessage
 
-    LaunchedEffect(deleteError) {
-        deleteError?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
-    }
-
-    LaunchedEffect(verificationMessage) {
-        verificationMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-            viewModel.clearVerificationMessage()
-        }
-    }
-
+    FeedbackHost(
+        message = feedback,
+        onConsumed = {
+            when {
+                deleteError != null -> viewModel.consumeDeleteError()
+                verificationMessage != null -> viewModel.clearVerificationMessage()
+                else -> snackbarMessage = null
+            }
+        },
+    ) {
     if (showEditProfile && profile != null) {
         EditProfileDialog(
             profile = profile!!,
@@ -137,7 +137,13 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        AvatarInitials(initials = p.initials, size = 52.dp, containerColor = CiruelaMedio, contentColor = Superficie)
+                        AvatarInitials(
+                            initials = p.initials,
+                            size = 52.dp,
+                            containerColor = CiruelaMedio,
+                            contentColor = Superficie,
+                            contentDescription = "Avatar de ${p.professionalName.ifBlank { p.name }}",
+                        )
                         Column {
                             Text(p.professionalName.ifBlank { p.name }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                             Text(p.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -212,7 +218,7 @@ fun SettingsScreen(
                     viewModel.logout()
                     onLoggedOut()
                 },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 50.dp),
                 shape = MaterialTheme.shapes.small,
                 colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = ErrorLogout),
             ) { Text("Cerrar sesión") }
@@ -220,9 +226,10 @@ fun SettingsScreen(
         item {
             TextButton(
                 onClick = { showDeleteAccountConfirm = true },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
             ) { Text("Eliminar cuenta", color = ErrorLogout) }
         }
+    }
     }
 }
 
@@ -276,7 +283,8 @@ private fun SettingsRow(label: String, value: String? = null, onClick: (() -> Un
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .defaultMinSize(minHeight = 48.dp)
+            .let { if (onClick != null) it.clickable(onClick = onClick, role = Role.Button) else it }
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,

@@ -11,8 +11,10 @@ import com.cocido.mipelu.data.remote.dto.SignupRequest
 import com.cocido.mipelu.data.remote.dto.StorageUsageDto
 import com.cocido.mipelu.data.remote.mapper.toDomain
 import com.cocido.mipelu.domain.model.UserProfile
+import com.cocido.mipelu.domain.repository.AppointmentRepository
 import com.cocido.mipelu.domain.repository.AuthRepository
 import com.cocido.mipelu.domain.repository.ClientRepository
+import com.cocido.mipelu.domain.repository.SessionState
 import com.cocido.mipelu.domain.repository.UserProfileRepository
 import com.cocido.mipelu.domain.repository.WorkRecordRepository
 import javax.inject.Inject
@@ -30,12 +32,16 @@ class RemoteAuthRepository @Inject constructor(
     private val clientRepository: ClientRepository,
     private val workRecordRepository: WorkRecordRepository,
     private val userProfileRepository: UserProfileRepository,
+    private val appointmentRepository: AppointmentRepository,
     private val sessionExpiredNotifier: SessionExpiredNotifier,
     @ApplicationScope private val appScope: CoroutineScope,
 ) : AuthRepository {
 
     private val _currentUser = MutableStateFlow<UserProfile?>(null)
     override val currentUser: StateFlow<UserProfile?> = _currentUser.asStateFlow()
+
+    private val _sessionState = MutableStateFlow(SessionState.Restoring)
+    override val sessionState: StateFlow<SessionState> = _sessionState.asStateFlow()
 
     init {
         // Auto-login: if a session was persisted from a previous run, restore it so
@@ -54,16 +60,21 @@ class RemoteAuthRepository @Inject constructor(
     }
 
     private suspend fun restoreSession() {
-        if (tokenStore.accessToken == null && tokenStore.refreshToken == null) return
+        if (tokenStore.accessToken == null && tokenStore.refreshToken == null) {
+            _sessionState.value = SessionState.Unauthenticated
+            return
+        }
         try {
             val profileDto = safeApiCall { api.getProfile() }
             val storage = fetchStorageUsageOrNull()
             _currentUser.value = profileDto.toDomain(storage)
+            _sessionState.value = SessionState.Authenticated
         } catch (e: Exception) {
             // Expired/revoked token that TokenAuthenticator couldn't refresh, or offline at
             // cold start - either way, fall back to the login screen instead of a stuck app.
             tokenStore.clear()
             _currentUser.value = null
+            _sessionState.value = SessionState.Unauthenticated
         }
     }
 
@@ -73,6 +84,7 @@ class RemoteAuthRepository @Inject constructor(
             tokenStore.saveTokens(response.accessToken, response.refreshToken)
             val profile = response.user.toDomain(fetchStorageUsageOrNull())
             _currentUser.value = profile
+            _sessionState.value = SessionState.Authenticated
             Result.success(profile)
         } catch (e: MiPeluApiException) {
             // A 401 here can only mean wrong credentials - there is no session yet to have
@@ -99,6 +111,7 @@ class RemoteAuthRepository @Inject constructor(
             tokenStore.saveTokens(response.accessToken, response.refreshToken)
             val profile = response.user.toDomain(fetchStorageUsageOrNull())
             _currentUser.value = profile
+            _sessionState.value = SessionState.Authenticated
             Result.success(profile)
         } catch (e: MiPeluApiException) {
             Result.failure(e)
@@ -127,10 +140,12 @@ class RemoteAuthRepository @Inject constructor(
         return try {
             safeApiCall { api.deleteAccount() }
             _currentUser.value = null
+            _sessionState.value = SessionState.Unauthenticated
             tokenStore.clear()
             clientRepository.clearCache()
             workRecordRepository.clearCache()
             userProfileRepository.clearCache()
+            appointmentRepository.clearCache()
             Result.success(Unit)
         } catch (e: MiPeluApiException) {
             Result.failure(e)
@@ -140,12 +155,14 @@ class RemoteAuthRepository @Inject constructor(
     override fun logout() {
         val refreshToken = tokenStore.refreshToken
         _currentUser.value = null
+        _sessionState.value = SessionState.Unauthenticated
         tokenStore.clear()
         // Otherwise the next login (same or different account, same device) would keep serving
         // this session's cached clients/work records/profile until process death.
         clientRepository.clearCache()
         workRecordRepository.clearCache()
         userProfileRepository.clearCache()
+        appointmentRepository.clearCache()
         if (refreshToken != null) {
             // Fire-and-forget: revoke server-side too, but don't make the user wait for it.
             appScope.launch {

@@ -1,6 +1,6 @@
 package com.cocido.mipelu.core.ui.components
 
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +26,7 @@ fun MiPeluButton(
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp),
     enabled: Boolean = true,
 ) {
-    val heightModifier = modifier.height(height)
+    val heightModifier = modifier.defaultMinSize(minHeight = height)
     when (style) {
         MiPeluButtonStyle.Primary -> Button(
             onClick = onClick,
@@ -69,7 +69,7 @@ fun MiPeluPillButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(48.dp).miPeluGlowShadow(color = Morado, shape = PillShape),
+        modifier = modifier.defaultMinSize(minHeight = 48.dp).miPeluGlowShadow(color = Morado, shape = PillShape),
         shape = PillShape,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 22.dp),
         colors = ButtonDefaults.buttonColors(

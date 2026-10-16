@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -24,13 +23,11 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Work
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
@@ -40,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.EmptyState
+import com.cocido.mipelu.core.ui.components.LoadingPane
 import com.cocido.mipelu.core.ui.components.MiPeluChip
 import com.cocido.mipelu.core.ui.components.MiPeluSearchField
 import com.cocido.mipelu.core.ui.components.WorkListItem
@@ -102,9 +100,7 @@ fun WorkListScreen(
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
             ) { targetMode ->
                 when (targetMode) {
-                    WorkListMode.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
+                    WorkListMode.Loading -> LoadingPane(contentDescription = "Cargando trabajos")
                     WorkListMode.Error -> EmptyState(
                         title = "No se pudieron cargar los trabajos",
                         subtitle = uiState.error.orEmpty(),

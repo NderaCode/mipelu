@@ -7,6 +7,10 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+# Machine-specific: names the local AVD by absolute path (leaks the developer's home dir).
+/.idea/deploymentTargetSelector.xml
+# Per-developer opt-in for Studio's AI assistant, not a project setting.
+/.idea/studiobot.xml
 .DS_Store
 Thumbs.db
 /build
@@ -27,3 +31,22 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# Secrets and credentials that must never reach the remote.
+*.pem
+*.p12
+google-services.json
+.env
+.env.*
+!.env.example
+
+# AI assistant workspaces: local permissions, prompts, session history and agent context.
+# These are per-developer and can carry conversation transcripts or machine paths.
+.claude/
+.cursor/
+.aider*
+.codeium/
+.continue/
+.gemini/
+.github/copilot-instructions.md
+.mcp.json

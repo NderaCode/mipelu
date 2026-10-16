@@ -1,7 +1,7 @@
 package com.cocido.mipelu.core.ui.components
 
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -38,7 +38,7 @@ fun MiPeluSearchField(
         modifier = modifier
             .fillMaxWidth()
             .miPeluCardShadow(shape = PillShape, elevation = 4.dp)
-            .height(48.dp)
+            .defaultMinSize(minHeight = 48.dp)
             // No hay label visible (es un pill de búsqueda) - se lo damos a TalkBack por semántica
             // para que anuncie qué campo es, ya que el placeholder desaparece al escribir.
             .semantics { contentDescription = label },

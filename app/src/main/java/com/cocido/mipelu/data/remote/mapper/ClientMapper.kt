@@ -1,6 +1,7 @@
 package com.cocido.mipelu.data.remote.mapper
 
 import com.cocido.mipelu.data.remote.dto.ClientDetailDto
+import com.cocido.mipelu.data.remote.dto.ClientListItemDto
 import com.cocido.mipelu.data.remote.dto.ClientUpsertRequest
 import com.cocido.mipelu.domain.model.Client
 
@@ -24,6 +25,24 @@ fun ClientDetailDto.toDomain(ownerUserId: String): Client = Client(
     productsToAvoid = productsToAvoid.orEmpty(),
     createdAt = createdAt.isoDateTimeToMillis(),
     updatedAt = updatedAt.isoDateTimeToMillis(),
+)
+
+fun ClientListItemDto.toDomain(ownerUserId: String): Client = Client(
+    id = id,
+    ownerUserId = ownerUserId,
+    name = name,
+    phone = phone.orEmpty(),
+    importantNotes = importantNotes.orEmpty(),
+    hairType = hairType.orEmpty(),
+    baseColor = baseColor.orEmpty(),
+    sensitivity = sensitivity.orEmpty(),
+    preferences = preferences.orEmpty(),
+    allergies = allergies.orEmpty(),
+    porosity = porosity.orEmpty(),
+    productsThatWorked = productsThatWorked.orEmpty(),
+    productsToAvoid = productsToAvoid.orEmpty(),
+    createdAt = createdAt?.isoDateTimeToMillis() ?: 0L,
+    updatedAt = updatedAt?.isoDateTimeToMillis() ?: 0L,
 )
 
 fun Client.toUpsertRequest(): ClientUpsertRequest = ClientUpsertRequest(

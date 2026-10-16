@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.cocido.mipelu.feature.appointments.AgendaScreen
+import com.cocido.mipelu.feature.appointments.BookingSettingsScreen
 import com.cocido.mipelu.feature.auth.ForgotPasswordScreen
 import com.cocido.mipelu.feature.auth.LoginScreen
 import com.cocido.mipelu.feature.auth.OnboardingScreen
@@ -78,6 +80,16 @@ fun MiPeluNavGraph(navController: NavHostController) {
                 onBuscarHistorial = { navController.navigate(MiPeluDestination.WorkList) },
                 onWorkClick = { workId -> navController.navigate(MiPeluDestination.WorkDetail(workId)) },
             )
+        }
+
+        composable<MiPeluDestination.Agenda> {
+            AgendaScreen(
+                onOpenSettings = { navController.navigate(MiPeluDestination.BookingSettings) },
+            )
+        }
+
+        composable<MiPeluDestination.BookingSettings> {
+            BookingSettingsScreen(onBack = { navController.popBackStack() })
         }
 
         composable<MiPeluDestination.ClientList> {

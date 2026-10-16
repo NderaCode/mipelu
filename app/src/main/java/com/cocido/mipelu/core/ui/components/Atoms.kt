@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.cocido.mipelu.core.theme.CiruelaMedio
 import com.cocido.mipelu.core.theme.NudeClaro
@@ -27,12 +29,20 @@ fun AvatarInitials(
     containerColor: Color = NudeClaro,
     contentColor: Color = CiruelaMedio,
     textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall,
+    contentDescription: String? = null,
 ) {
     Box(
         modifier = modifier
             .size(size)
             .background(containerColor, CircleShape)
-            .border(BorderStroke(1.dp, contentColor.copy(alpha = 0.08f)), CircleShape),
+            .border(BorderStroke(1.dp, contentColor.copy(alpha = 0.08f)), CircleShape)
+            .then(
+                if (contentDescription != null) {
+                    Modifier.semantics { this.contentDescription = contentDescription }
+                } else {
+                    Modifier
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(

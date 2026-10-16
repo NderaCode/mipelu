@@ -35,6 +35,11 @@ class TokenAuthenticator(
 
         val refreshToken = tokenStore.refreshToken ?: return null
 
+        // runBlocking is correct here rather than a smell: authenticate() is a synchronous callback
+        // that OkHttp always invokes on one of its own dispatcher threads, never the main thread,
+        // and it must return the retried request or null. The blocking is bounded by the refresh
+        // client's own connect/read timeouts (NetworkModule), so a dead backend can't pin the
+        // thread indefinitely.
         val newTokens = try {
             runBlocking { refreshApi.refresh(RefreshTokenRequest(refreshToken)) }
         } catch (e: Exception) {

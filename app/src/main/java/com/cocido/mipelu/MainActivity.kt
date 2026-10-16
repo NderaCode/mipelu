@@ -13,12 +13,14 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -26,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cocido.mipelu.core.navigation.MiPeluBottomNavBar
 import com.cocido.mipelu.core.navigation.MiPeluDestination
 import com.cocido.mipelu.core.navigation.MiPeluNavGraph
+import com.cocido.mipelu.core.navigation.SessionWatcherViewModel
 import com.cocido.mipelu.core.navigation.topLevelDestinations
 import com.cocido.mipelu.core.theme.MiPeluTheme
 import com.cocido.mipelu.core.ui.TestTags
@@ -45,10 +48,23 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun MiPeluApp() {
+private fun MiPeluApp(sessionWatcher: SessionWatcherViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+
+    // A refresh token that can't be renewed leaves the user sitting on a screen whose every
+    // request now 401s - empty lists, failed saves - looking like the app is broken. Send them
+    // back to onboarding and clear the stack so they can't navigate into the shell of a dead
+    // session.
+    LaunchedEffect(Unit) {
+        sessionWatcher.sessionExpired.collect {
+            navController.navigate(MiPeluDestination.Onboarding) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     val currentTopLevel = topLevelDestinations.find { dest ->
         currentDestination?.hierarchy?.any { it.hasRoute(dest::class) } == true
@@ -105,7 +121,11 @@ private fun MiPeluApp() {
         // padding superior NO se aplica acá a propósito: cada pantalla decide si absorbe el inset
         // de la barra de estado (TopBarBack, títulos) o si lo ignora para pintar debajo de ella
         // (el hero de Inicio).
-        Box(modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding())) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = innerPadding.calculateBottomPadding()),
+        ) {
             MiPeluNavGraph(navController = navController)
         }
     }

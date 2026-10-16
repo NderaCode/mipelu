@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+    Auto Backup rules for API 30 and below (API 31+ uses data_extraction_rules.xml).
+
+    Session tokens are excluded from backup on purpose. They live in EncryptedSharedPreferences,
+    but that only protects them at rest on this device: the master key is held in the Android
+    Keystore and never leaves it, so a restored copy of the file would be undecryptable anyway.
+    Backing it up is therefore pure downside - it puts ciphertext of a bearer credential into the
+    user's Google account for no functional gain. Signing back in re-creates the session.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="sharedpref" path="mipelu_secure_prefs.xml" />
+    <!-- Compressed photos staged here before upload; transient and re-creatable. -->
+    <exclude domain="external" path="photos" />
+    <!-- Client names, phones, allergies: third-party PII that must not sit in Google Drive. -->
+    <exclude domain="database" path="mipelu.db" />
+    <exclude domain="database" path="mipelu.db-journal" />
+    <exclude domain="database" path="mipelu.db-shm" />
+    <exclude domain="database" path="mipelu.db-wal" />
 </full-backup-content>

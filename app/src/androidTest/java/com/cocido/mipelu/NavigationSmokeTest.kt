@@ -27,7 +27,11 @@ class NavigationSmokeTest {
     }
 
     @Test
-    fun bottomNavSwitchesBetweenTheFourTopLevelDestinations() {
+    fun bottomNavSwitchesBetweenTheTopLevelDestinations() {
+        composeRule.onNodeWithTag(TestTags.BOTTOM_NAV_AGENDA).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TestTags.AGENDA_SHARE_BUTTON).assertExists()
+
         composeRule.onNodeWithTag(TestTags.BOTTOM_NAV_CLIENTS).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TestTags.CLIENT_LIST_SEARCH_FIELD).assertExists()

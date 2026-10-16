@@ -1,8 +1,8 @@
 package com.cocido.mipelu.data.remote
 
 import app.cash.turbine.test
+import com.cocido.mipelu.data.local.InMemoryWorkRecordLocalStore
 import com.cocido.mipelu.data.remote.api.MiPeluApi
-import com.cocido.mipelu.data.remote.dto.WorkRecordDetailDto
 import com.cocido.mipelu.data.remote.dto.WorkRecordListItemDto
 import com.cocido.mipelu.data.remote.dto.WorkRecordListResponse
 import io.mockk.coEvery
@@ -23,27 +23,14 @@ private fun workSummary(id: String, clientId: String = "client-1") = WorkRecordL
     isDraft = false,
 )
 
-private fun workDetail(id: String, clientId: String = "client-1") = WorkRecordDetailDto(
-    id = id,
-    clientId = clientId,
-    clientName = "Cliente",
-    serviceTypes = listOf("Color"),
-    date = "2026-07-20",
-    isDraft = false,
-    createdAt = "2026-07-20T15:04:33.123Z",
-    updatedAt = "2026-07-20T15:04:33.123Z",
-)
-
 class RemoteWorkRecordRepositoryTest {
 
     @Test
     fun `network failure on fetch sets error instead of throwing`() = runTest {
         val api = mockk<MiPeluApi>()
         coEvery { api.listWorkRecords(any(), any(), any(), any(), any()) } throws IOException("no network")
-        val repo = RemoteWorkRecordRepository(api)
+        val repo = RemoteWorkRecordRepository(api, InMemoryWorkRecordLocalStore())
 
-        // Before the fix, this exception would propagate out of refresh() and crash whatever
-        // combine/stateIn was collecting observeWorks() instead of surfacing an error state.
         repo.refresh("owner")
 
         assertNotNull(repo.error.value)
@@ -57,11 +44,11 @@ class RemoteWorkRecordRepositoryTest {
         val page2 = WorkRecordListResponse(items = listOf(workSummary("3")), total = 3)
         coEvery { api.listWorkRecords(any(), any(), any(), 1, any()) } returns page1
         coEvery { api.listWorkRecords(any(), any(), any(), 2, any()) } returns page2
-        coEvery { api.getWorkRecord(any()) } answers { workDetail(firstArg()) }
-        val repo = RemoteWorkRecordRepository(api)
+        val repo = RemoteWorkRecordRepository(api, InMemoryWorkRecordLocalStore())
 
         repo.observeWorks("owner").test {
-            val result = awaitItem()
+            var result = awaitItem()
+            if (result.isEmpty()) result = awaitItem()
             assertEquals(3, result.size)
             assertEquals(setOf("1", "2", "3"), result.map { it.id }.toSet())
             cancelAndIgnoreRemainingEvents()
@@ -69,5 +56,6 @@ class RemoteWorkRecordRepositoryTest {
 
         coVerify(exactly = 1) { api.listWorkRecords(any(), any(), any(), 1, any()) }
         coVerify(exactly = 1) { api.listWorkRecords(any(), any(), any(), 2, any()) }
+        coVerify(exactly = 0) { api.getWorkRecord(any()) }
     }
 }

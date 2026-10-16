@@ -7,10 +7,14 @@ package com.cocido.mipelu.core.ui
 object TestTags {
     // Bottom nav (MainActivity's Scaffold FAB + MiPeluBottomNavBar)
     const val BOTTOM_NAV_HOME = "bottom_nav_home"
+    const val BOTTOM_NAV_AGENDA = "bottom_nav_agenda"
     const val BOTTOM_NAV_CLIENTS = "bottom_nav_clients"
     const val BOTTOM_NAV_WORKS = "bottom_nav_works"
     const val BOTTOM_NAV_PROFILE = "bottom_nav_profile"
     const val FAB_ADD = "fab_add"
+    const val AGENDA_SHARE_BUTTON = "agenda_share_button"
+    const val AGENDA_SETTINGS_BUTTON = "agenda_settings_button"
+    const val AGENDA_PUBLIC_URL = "agenda_public_url"
 
     // Login
     const val LOGIN_EMAIL_FIELD = "login_email_field"

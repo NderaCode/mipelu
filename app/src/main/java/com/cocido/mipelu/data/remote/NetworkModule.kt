@@ -10,6 +10,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
@@ -30,6 +31,13 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    private const val CONNECT_TIMEOUT_SECONDS = 15L
+    private const val READ_TIMEOUT_SECONDS = 30L
+
+    /** Deliberately the most generous of the three: photo uploads on a salon's mobile uplink
+     * legitimately take far longer than any other request this app makes. */
+    private const val WRITE_TIMEOUT_SECONDS = 60L
+
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
     annotation class RefreshClient
@@ -41,18 +49,39 @@ object NetworkModule {
         explicitNulls = false
     }
 
+    /**
+     * BASIC (method, URL, status, timing) instead of BODY even in debug builds: BODY writes the
+     * Authorization header and the raw request bodies of login/signup - i.e. bearer tokens and
+     * plaintext passwords - into logcat, which routinely ends up pasted into bug reports. The
+     * redactions are belt and braces in case this is ever raised to HEADERS while debugging.
+     */
     @Provides
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor =
         HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
+            redactHeader("Authorization")
+            redactHeader("Cookie")
+            redactHeader("Set-Cookie")
         }
+
+    /**
+     * Explicit timeouts instead of OkHttp's defaults. A hairdresser using this in a salon is
+     * routinely on flaky mobile data, where the failure mode that matters is a request that hangs
+     * rather than one that fails outright.
+     */
+    private fun OkHttpClient.Builder.applyMiPeluTimeouts(): OkHttpClient.Builder =
+        connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
 
     @Provides
     @Singleton
     @RefreshClient
     fun provideRefreshOkHttpClient(logging: HttpLoggingInterceptor): OkHttpClient =
         OkHttpClient.Builder()
+            .applyMiPeluTimeouts()
             .addInterceptor(logging)
             .build()
 
@@ -88,6 +117,7 @@ object NetworkModule {
         authenticator: TokenAuthenticator,
     ): OkHttpClient =
         OkHttpClient.Builder()
+            .applyMiPeluTimeouts()
             .addInterceptor(AuthInterceptor(tokenStore))
             .authenticator(authenticator)
             .addInterceptor(logging)

@@ -2,6 +2,7 @@ package com.cocido.mipelu.data.local.fake
 
 import com.cocido.mipelu.domain.model.UserProfile
 import com.cocido.mipelu.domain.repository.AuthRepository
+import com.cocido.mipelu.domain.repository.SessionState
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,6 +23,10 @@ class FakeAuthRepository @Inject constructor(
     private val _currentUser = MutableStateFlow<UserProfile?>(null)
     override val currentUser: StateFlow<UserProfile?> = _currentUser.asStateFlow()
 
+    // In-memory only: there is nothing to restore, so this never sits in Restoring.
+    private val _sessionState = MutableStateFlow(SessionState.Unauthenticated)
+    override val sessionState: StateFlow<SessionState> = _sessionState.asStateFlow()
+
     override suspend fun login(email: String, password: String): Result<UserProfile> {
         val normalizedEmail = email.trim().lowercase()
         val entry = credentials[normalizedEmail]
@@ -31,6 +36,7 @@ class FakeAuthRepository @Inject constructor(
         val profile = userProfileRepository.getProfile(entry.first)
             ?: return Result.failure(IllegalStateException("No se encontró el perfil"))
         _currentUser.value = profile
+        _sessionState.value = SessionState.Authenticated
         return Result.success(profile)
     }
 
@@ -54,6 +60,7 @@ class FakeAuthRepository @Inject constructor(
         credentials[normalizedEmail] = userId to password
         userProfileRepository.updateProfile(profile)
         _currentUser.value = profile
+        _sessionState.value = SessionState.Authenticated
         return Result.success(profile)
     }
 
@@ -65,10 +72,12 @@ class FakeAuthRepository @Inject constructor(
         val userId = _currentUser.value?.id
         credentials.entries.removeAll { it.value.first == userId }
         _currentUser.value = null
+        _sessionState.value = SessionState.Unauthenticated
         return Result.success(Unit)
     }
 
     override fun logout() {
         _currentUser.value = null
+        _sessionState.value = SessionState.Unauthenticated
     }
 }

@@ -24,12 +24,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -37,7 +34,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
@@ -49,6 +45,7 @@ import com.cocido.mipelu.core.ui.TestTags
 import com.cocido.mipelu.core.ui.components.AvatarInitials
 import com.cocido.mipelu.core.ui.components.BadgeTag
 import com.cocido.mipelu.core.ui.components.EmptyState
+import com.cocido.mipelu.core.ui.components.LoadingPane
 import com.cocido.mipelu.core.ui.components.MiPeluChip
 import com.cocido.mipelu.core.ui.components.MiPeluSearchField
 import com.cocido.mipelu.core.ui.components.miPeluCardShadow
@@ -113,9 +110,7 @@ fun ClientListScreen(
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
             ) { targetMode ->
                 when (targetMode) {
-                    ClientListMode.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
+                    ClientListMode.Loading -> LoadingPane(contentDescription = "Cargando clientas")
                     ClientListMode.Error -> EmptyState(
                         title = "No se pudieron cargar las clientas",
                         subtitle = uiState.error.orEmpty(),

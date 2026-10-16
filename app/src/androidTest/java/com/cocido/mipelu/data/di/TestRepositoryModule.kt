@@ -1,9 +1,11 @@
 package com.cocido.mipelu.data.di
 
+import com.cocido.mipelu.data.local.fake.FakeAppointmentRepository
 import com.cocido.mipelu.data.local.fake.FakeAuthRepository
 import com.cocido.mipelu.data.local.fake.FakeClientRepository
 import com.cocido.mipelu.data.local.fake.FakeUserProfileRepository
 import com.cocido.mipelu.data.local.fake.FakeWorkRecordRepository
+import com.cocido.mipelu.domain.repository.AppointmentRepository
 import com.cocido.mipelu.domain.repository.AuthRepository
 import com.cocido.mipelu.domain.repository.ClientRepository
 import com.cocido.mipelu.domain.repository.UserProfileRepository
@@ -33,4 +35,7 @@ abstract class TestRepositoryModule {
 
     @Binds
     abstract fun bindUserProfileRepository(impl: FakeUserProfileRepository): UserProfileRepository
+
+    @Binds
+    abstract fun bindAppointmentRepository(impl: FakeAppointmentRepository): AppointmentRepository
 }

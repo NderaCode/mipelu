@@ -6,6 +6,11 @@ import kotlinx.coroutines.flow.StateFlow
 interface AuthRepository {
     val currentUser: StateFlow<UserProfile?>
 
+    /** Settles to [SessionState.Authenticated]/[SessionState.Unauthenticated] once the persisted
+     * session (if any) has been validated. Callers that route on "logged in or not" must wait for
+     * it to leave [SessionState.Restoring]. */
+    val sessionState: StateFlow<SessionState>
+
     suspend fun login(email: String, password: String): Result<UserProfile>
 
     suspend fun signUp(

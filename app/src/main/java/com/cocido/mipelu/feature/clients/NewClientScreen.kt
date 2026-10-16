@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
@@ -19,14 +19,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cocido.mipelu.core.theme.TextoMuted
 import com.cocido.mipelu.core.ui.TestTags
+import com.cocido.mipelu.core.ui.components.FormErrorText
 import com.cocido.mipelu.core.ui.components.MiPeluButton
-import com.cocido.mipelu.core.ui.components.MiPeluTextField
+import com.cocido.mipelu.core.ui.components.SuggestedFormField
 import com.cocido.mipelu.core.ui.components.TopBarBack
 import com.cocido.mipelu.domain.model.PlanLimits
 
@@ -51,13 +53,23 @@ fun NewClientScreen(
                 contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(nuevaClientaFields) { field ->
-                    MiPeluTextField(
+                itemsIndexed(nuevaClientaFields) { index, field ->
+                    val isLast = index == nuevaClientaFields.lastIndex
+                    SuggestedFormField(
                         value = field.getter(draft),
                         onValueChange = { viewModel.updateField(field, it) },
                         label = field.label,
                         placeholder = field.placeholder,
                         multiline = field.multiline,
+                        keyboardType = field.keyboardType,
+                        suggestions = field.suggestions,
+                        imeAction = if (isLast) ImeAction.Done else ImeAction.Next,
+                        onDone = if (isLast) {
+                            { if (!isSaving) viewModel.save(onSaved) }
+                        } else {
+                            null
+                        },
+                        isError = field.label == "Nombre" && errorMessage != null && draft.name.isBlank(),
                         modifier = if (field === nuevaClientaFields.first()) {
                             Modifier.testTag(TestTags.NEW_CLIENT_NAME_FIELD)
                         } else {
@@ -66,13 +78,7 @@ fun NewClientScreen(
                     )
                 }
                 errorMessage?.let { message ->
-                    item {
-                        Text(
-                            message,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
+                    item { FormErrorText(message) }
                 }
                 item {
                     MiPeluButton(

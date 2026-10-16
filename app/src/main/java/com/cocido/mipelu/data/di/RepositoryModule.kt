@@ -1,9 +1,11 @@
 package com.cocido.mipelu.data.di
 
+import com.cocido.mipelu.data.remote.RemoteAppointmentRepository
 import com.cocido.mipelu.data.remote.RemoteAuthRepository
 import com.cocido.mipelu.data.remote.RemoteClientRepository
 import com.cocido.mipelu.data.remote.RemoteUserProfileRepository
 import com.cocido.mipelu.data.remote.RemoteWorkRecordRepository
+import com.cocido.mipelu.domain.repository.AppointmentRepository
 import com.cocido.mipelu.domain.repository.AuthRepository
 import com.cocido.mipelu.domain.repository.ClientRepository
 import com.cocido.mipelu.domain.repository.UserProfileRepository
@@ -33,4 +35,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindUserProfileRepository(impl: RemoteUserProfileRepository): UserProfileRepository
+
+    @Binds
+    abstract fun bindAppointmentRepository(impl: RemoteAppointmentRepository): AppointmentRepository
 }
